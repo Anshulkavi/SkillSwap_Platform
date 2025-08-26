@@ -1,6 +1,6 @@
 // src/contexts/AuthContext.js
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axios';
 
 const AuthContext = createContext();
 
@@ -17,19 +17,20 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  // Set up axios interceptor
+  // Set up axios Authorization header when token changes
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       fetchUser();
     } else {
       setLoading(false);
     }
   }, [token]);
 
+  // Fetch current user
   const fetchUser = async () => {
     try {
-      const response = await axios.get('/api/auth/me');
+      const response = await api.get('/api/auth/me');
       setUser(response.data);
     } catch (error) {
       console.error('Failed to fetch user:', error);
@@ -39,42 +40,69 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Login user
   const login = async (email, password) => {
     const formData = new FormData();
     formData.append('username', email);
     formData.append('password', password);
 
-    const response = await axios.post('/api/auth/login', formData);
+    const response = await api.post('/api/auth/login', formData, {
+      withCredentials: true, // ensures refresh token cookie is set
+    });
+
     const { access_token } = response.data;
 
     localStorage.setItem('token', access_token);
     setToken(access_token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+    api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
 
     await fetchUser();
     return response.data;
   };
 
+  // Signup user
   const signup = async (userData) => {
-    const response = await axios.post('/api/auth/signup', userData);
+    const response = await api.post('/api/auth/signup', userData);
     return response.data;
   };
 
+  // Refresh access token
+  const refreshToken = async () => {
+    try {
+      const response = await api.post('/api/auth/refresh', null, {
+        withCredentials: true, // sends the refresh token cookie
+      });
+      const { access_token } = response.data;
+      localStorage.setItem('token', access_token);
+      setToken(access_token);
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      return access_token;
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      logout();
+      return null;
+    }
+  };
+
+  // Logout user
   const logout = async () => {
     try {
-      await axios.post('/api/auth/logout');
+      await api.post('/api/auth/logout', null, {
+        withCredentials: true,
+      });
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       localStorage.removeItem('token');
       setToken(null);
       setUser(null);
-      delete axios.defaults.headers.common['Authorization'];
+      delete api.defaults.headers.common['Authorization'];
     }
   };
 
+  // Update user profile
   const updateProfile = async (profileData) => {
-    const response = await axios.put('/api/users/me', profileData);
+    const response = await api.put('/api/users/me', profileData);
     setUser(response.data);
     return response.data;
   };
@@ -86,8 +114,9 @@ export const AuthProvider = ({ children }) => {
     login,
     signup,
     logout,
+    refreshToken,
     updateProfile,
-    fetchUser
+    fetchUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

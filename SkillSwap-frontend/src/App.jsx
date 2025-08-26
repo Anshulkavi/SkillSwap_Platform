@@ -1,17 +1,18 @@
 // src/App.js
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
-import Listings from './pages/Listings';
-import CreateListing from './pages/CreateListing';
-import Profile from './pages/Profile';
-import Chat from './pages/Chat';
-import VideoCall from './pages/VideoCall';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/Navbar";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import Listings from "./pages/Listings";
+import CreateListing from "./pages/CreateListing";
+import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
+import VideoCall from "./pages/VideoCall";
+import SkillSwapLanding from "./pages/SkillSwapLanding";
 
 function App() {
   return (
@@ -20,10 +21,11 @@ function App() {
         <div className="min-h-screen bg-gray-50">
           <Navbar />
           <Routes>
+            <Route path="/" element={<SkillSwapLanding />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />

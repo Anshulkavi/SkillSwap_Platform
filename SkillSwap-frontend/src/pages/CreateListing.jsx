@@ -1,7 +1,7 @@
 // src/pages/CreateListing.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 
 const CreateListing = () => {
   const [formData, setFormData] = useState({
@@ -26,7 +26,7 @@ const CreateListing = () => {
         duration_hours: formData.duration_hours ? parseInt(formData.duration_hours) : null
       };
       
-      await axios.post('/api/listings/', submitData);
+      await api.post('/api/listings/', submitData);
       navigate('/listings');
     } catch (error) {
       setError(error.response?.data?.detail || 'Failed to create listing');

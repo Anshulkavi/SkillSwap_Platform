@@ -28,7 +28,7 @@ const Listings = () => {
 
   const handleRequestSwap = async (listingId) => {
     try {
-      await axios.post('/api/requests/', {
+      await api.post('/api/requests/', {
         listing_id: listingId,
         message: 'I would like to swap skills with you!'
       });

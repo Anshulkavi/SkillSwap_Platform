@@ -20,15 +20,22 @@ async def lifespan(app: FastAPI):
     SQLModel.metadata.create_all(engine)
     yield
 
+
+# CORS allowed origins
+origins = [
+    "http://localhost:5173",  # React dev server
+    "http://localhost:3000",  # optional if you use another frontend
+]
+
 app = FastAPI(title="SkillSwap API", version="1.0.0", lifespan=lifespan)
 
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=origins,
+    allow_credentials=True,      # needed if you use cookies or auth
+    allow_methods=["*"],         # allow GET, POST, etc.
+    allow_headers=["*"],         # allow all headers
 )
 
 # Include routers

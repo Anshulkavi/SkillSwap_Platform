@@ -5,7 +5,7 @@
 ![SkillSwap Banner](https://img.shields.io/badge/SkillSwap-Platform-blue?style=for-the-badge)
 ![React](https://img.shields.io/badge/React-18+-blue?style=flat-square&logo=react)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat-square&logo=tailwind-css)
-![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green?style=flat-square&logo=node.js)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=flat-square&logo=fastapi)
 
 ## 🌟 Overview
 

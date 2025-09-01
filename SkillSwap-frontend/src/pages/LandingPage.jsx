@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Users, BookOpen, Trophy, Star, ChevronDown, Menu, X, Play, Check, MessageCircle, Video, Shield } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function SkillSwapLanding() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   
   const testimonials = [
     {
@@ -47,6 +51,24 @@ export default function SkillSwapLanding() {
     setIsMenuOpen(false);
   };
 
+  const handleAuthAction = (action) => {
+    if (user) {
+      // If user is logged in, go to dashboard
+      navigate('/dashboard');
+    } else {
+      // If not logged in, go to login or signup
+      navigate(action);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-400"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white overflow-hidden">
       {/* Navigation */}
@@ -66,10 +88,28 @@ export default function SkillSwapLanding() {
               <button onClick={() => scrollToSection('features')} className="hover:text-cyan-400 transition-colors">Features</button>
               <button onClick={() => scrollToSection('how-it-works')} className="hover:text-cyan-400 transition-colors">How it Works</button>
               <button onClick={() => scrollToSection('testimonials')} className="hover:text-cyan-400 transition-colors">Reviews</button>
-              <a href="/login" className="hover:text-cyan-400 transition-colors">Sign In</a>
-              <a href="/signup" className="bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-2 rounded-full hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105">
-                Get Started
-              </a>
+              
+              {user ? (
+                <>
+                  <span className="text-cyan-400">Welcome, {user.name}!</span>
+                  <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-2 rounded-full hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105"
+                  >
+                    Go to Dashboard
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => handleAuthAction('/login')} className="hover:text-cyan-400 transition-colors">Sign In</button>
+                  <button 
+                    onClick={() => handleAuthAction('/signup')}
+                    className="bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-2 rounded-full hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105"
+                  >
+                    Get Started
+                  </button>
+                </>
+              )}
             </div>
             
             <button 
@@ -88,10 +128,28 @@ export default function SkillSwapLanding() {
               <button onClick={() => scrollToSection('features')} className="block hover:text-cyan-400 transition-colors">Features</button>
               <button onClick={() => scrollToSection('how-it-works')} className="block hover:text-cyan-400 transition-colors">How it Works</button>
               <button onClick={() => scrollToSection('testimonials')} className="block hover:text-cyan-400 transition-colors">Reviews</button>
-              <a href="/login" className="block hover:text-cyan-400 transition-colors">Sign In</a>
-              <a href="/signup" className="bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-2 rounded-full w-full text-center block text-white no-underline">
-                Get Started
-              </a>
+              
+              {user ? (
+                <>
+                  <span className="block text-cyan-400">Welcome, {user.name}!</span>
+                  <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-2 rounded-full w-full text-center block text-white"
+                  >
+                    Go to Dashboard
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => handleAuthAction('/login')} className="block hover:text-cyan-400 transition-colors">Sign In</button>
+                  <button 
+                    onClick={() => handleAuthAction('/signup')}
+                    className="bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-2 rounded-full w-full text-center block text-white"
+                  >
+                    Get Started
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -119,14 +177,41 @@ export default function SkillSwapLanding() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <a href="/signup" className="bg-gradient-to-r from-cyan-500 to-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105 flex items-center text-white no-underline">
-                Start Swapping Now
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </a>
-              <a href="/login" className="border border-white/30 px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/10 transition-all flex items-center text-white no-underline">
-                <Play className="mr-2 w-5 h-5" />
-                Sign In
-              </a>
+              {user ? (
+                <>
+                  <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-gradient-to-r from-cyan-500 to-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105 flex items-center text-white"
+                  >
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => navigate('/chat')}
+                    className="border border-white/30 px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/10 transition-all flex items-center text-white"
+                  >
+                    <MessageCircle className="mr-2 w-5 h-5" />
+                    View Messages
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => handleAuthAction('/signup')}
+                    className="bg-gradient-to-r from-cyan-500 to-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105 flex items-center text-white"
+                  >
+                    Start Swapping Now
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => handleAuthAction('/login')}
+                    className="border border-white/30 px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/10 transition-all flex items-center text-white"
+                  >
+                    <Play className="mr-2 w-5 h-5" />
+                    Sign In
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Floating Skills */}
@@ -297,10 +382,18 @@ export default function SkillSwapLanding() {
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Start Your <span className="text-cyan-400">Skill Journey</span>?
+            {user ? (
+              <>Welcome Back, <span className="text-cyan-400">{user.name}</span>!</>
+            ) : (
+              <>Ready to Start Your <span className="text-cyan-400">Skill Journey</span>?</>
+            )}
           </h2>
           <p className="text-xl text-gray-300 mb-12">
-            Join thousands of learners and teachers who are already transforming their lives through skill exchange.
+            {user ? (
+              "Continue exploring and connecting with fellow skill swappers in your dashboard."
+            ) : (
+              "Join thousands of learners and teachers who are already transforming their lives through skill exchange."
+            )}
           </p>
           
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 mb-12">
@@ -320,10 +413,25 @@ export default function SkillSwapLanding() {
             </div>
           </div>
           
-          <a href="/signup" className="bg-gradient-to-r from-cyan-500 to-purple-600 px-12 py-4 rounded-full text-xl font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105 mb-4 text-white no-underline inline-block">
-            Join SkillSwap Today
-          </a>
-          <p className="text-gray-400">Free to join • No credit card required</p>
+          {user ? (
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="bg-gradient-to-r from-cyan-500 to-purple-600 px-12 py-4 rounded-full text-xl font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105 mb-4 text-white inline-block"
+            >
+              Continue to Dashboard
+            </button>
+          ) : (
+            <button 
+              onClick={() => handleAuthAction('/signup')}
+              className="bg-gradient-to-r from-cyan-500 to-purple-600 px-12 py-4 rounded-full text-xl font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all transform hover:scale-105 mb-4 text-white inline-block"
+            >
+              Join SkillSwap Today
+            </button>
+          )}
+          
+          {!user && (
+            <p className="text-gray-400">Free to join • No credit card required</p>
+          )}
         </div>
       </section>
 

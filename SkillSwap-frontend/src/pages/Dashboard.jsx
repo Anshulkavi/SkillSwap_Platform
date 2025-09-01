@@ -19,52 +19,52 @@ const Dashboard = () => {
   }, []);
 
   const fetchDashboardData = async () => {
-    try {
-      const [listingsRes, sentReqRes, receivedReqRes] = await Promise.all([
-        axios.get('/api/listings/my'),
-        axios.get('/api/requests/sent'),
-        axios.get('/api/requests/received')
-      ]);
+  try {
+    const [listingsRes, sentReqRes, receivedReqRes] = await Promise.all([
+      axios.get('/api/listings/my'),
+      axios.get('/api/requests/sent'),
+      axios.get('/api/requests/received')
+    ]);
 
-      const listings = listingsRes.data;
-      const sentRequests = sentReqRes.data;
-      const receivedRequests = receivedReqRes.data;
+    const listings = Array.isArray(listingsRes.data) ? listingsRes.data : listingsRes.data.listings || [];
+    const sentRequests = Array.isArray(sentReqRes.data) ? sentReqRes.data : sentReqRes.data.requests || [];
+    const receivedRequests = Array.isArray(receivedReqRes.data) ? receivedReqRes.data : receivedReqRes.data.requests || [];
 
-      setStats({
-        myListings: listings.length,
-        pendingRequests: [...sentRequests, ...receivedRequests].filter(req => req.status === 'pending').length,
-        completedSwaps: [...sentRequests, ...receivedRequests].filter(req => req.status === 'completed').length
-      });
+    setStats({
+      myListings: listings.length,
+      pendingRequests: [...sentRequests, ...receivedRequests].filter(req => req.status === 'pending').length,
+      completedSwaps: [...sentRequests, ...receivedRequests].filter(req => req.status === 'completed').length
+    });
 
-      // Combine and sort activity
-      const allActivity = [
-        ...listings.map(listing => ({
-          type: 'listing',
-          title: listing.title,
-          date: listing.created_at,
-          description: `Posted "${listing.title}"`
-        })),
-        ...sentRequests.map(req => ({
-          type: 'request_sent',
-          title: req.listing?.title || 'Request',
-          date: req.created_at,
-          description: `Sent request for "${req.listing?.title}"`
-        })),
-        ...receivedRequests.map(req => ({
-          type: 'request_received',
-          title: req.listing?.title || 'Request',
-          date: req.created_at,
-          description: `Received request for "${req.listing?.title}"`
-        }))
-      ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+    const allActivity = [
+      ...listings.map(listing => ({
+        type: 'listing',
+        title: listing.title,
+        date: listing.created_at,
+        description: `Posted "${listing.title}"`
+      })),
+      ...sentRequests.map(req => ({
+        type: 'request_sent',
+        title: req.listing?.title || 'Request',
+        date: req.created_at,
+        description: `Sent request for "${req.listing?.title}"`
+      })),
+      ...receivedRequests.map(req => ({
+        type: 'request_received',
+        title: req.listing?.title || 'Request',
+        date: req.created_at,
+        description: `Received request for "${req.listing?.title}"`
+      }))
+    ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
 
-      setRecentActivity(allActivity);
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setRecentActivity(allActivity);
+  } catch (error) {
+    console.error('Failed to fetch dashboard data:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (loading) {
     return (

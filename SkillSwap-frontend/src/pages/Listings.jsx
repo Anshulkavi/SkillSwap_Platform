@@ -1,7 +1,7 @@
 // src/pages/Listings.js
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Filter, MapPin, Clock, Star, MessageCircle, Plus, User, ArrowRight } from 'lucide-react';
+import { Search, Filter, MapPin, Clock, Star, MessageCircle, Plus, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 
 const Listings = () => {
@@ -18,10 +18,12 @@ const Listings = () => {
     'Language', 'Business', 'Fitness', 'Photography'
   ];
 
+  // Fetch listings from API
   useEffect(() => {
     fetchListings();
   }, [searchQuery]);
 
+  // Apply category filter whenever listings or selectedCategory change
   useEffect(() => {
     filterListings();
   }, [listings, selectedCategory]);
@@ -31,25 +33,39 @@ const Listings = () => {
       const response = await axios.get('/api/listings/', {
         params: searchQuery ? { search: searchQuery } : {}
       });
-      setListings(response.data);
+
+      // Ensure we always have an array
+      const data = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data.listings)
+        ? response.data.listings
+        : [];
+
+      setListings(data);
     } catch (error) {
       console.error('Failed to fetch listings:', error);
+      setListings([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filterListings = () => {
+    if (!Array.isArray(listings)) {
+      setFilteredListings([]);
+      return;
+    }
+
     let filtered = listings;
 
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(listing => 
-        listing.skill_offered.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-        listing.skill_wanted?.toLowerCase().includes(selectedCategory.toLowerCase())
+      filtered = filtered.filter(listing =>
+        (listing.skill_offered || '').toLowerCase().includes(selectedCategory.toLowerCase()) ||
+        (listing.skill_wanted || '').toLowerCase().includes(selectedCategory.toLowerCase())
       );
     }
 
-    setFilteredListings(filtered);
+    setFilteredListings(Array.isArray(filtered) ? filtered : []);
   };
 
   const handleRequestSwap = async (listingId) => {
@@ -115,7 +131,6 @@ const Listings = () => {
 
         {/* Search and Filters */}
         <div className="mb-8 space-y-6">
-          {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400" />
             <input
@@ -127,7 +142,6 @@ const Listings = () => {
             />
           </div>
 
-          {/* Filter Bar */}
           <div className="flex flex-wrap items-center gap-4">
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -137,7 +151,6 @@ const Listings = () => {
               Filters
             </button>
 
-            {/* Category Pills */}
             <div className="flex flex-wrap gap-2">
               {categories.map(category => (
                 <button
@@ -159,126 +172,90 @@ const Listings = () => {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{filteredListings.length}</span> of <span className="font-semibold text-gray-900">{listings.length}</span> listings
+            Showing <span className="font-semibold text-gray-900">{Array.isArray(filteredListings) ? filteredListings.length : 0}</span> of <span className="font-semibold text-gray-900">{Array.isArray(listings) ? listings.length : 0}</span> listings
           </p>
         </div>
 
         {/* Listings Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredListings.map((listing, index) => (
-            <div key={listing.id} className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all duration-300 overflow-hidden">
-              
-              {/* Card Header */}
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-12 h-12 ${getRandomColor(index)} rounded-xl flex items-center justify-center text-white font-bold shadow-lg`}>
-                      {getInitials(listing.owner?.name)}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{listing.owner?.name || 'Unknown User'}</h3>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        {listing.owner?.location || 'Location not specified'}
+          {Array.isArray(filteredListings) && filteredListings.length > 0
+            ? filteredListings.map((listing, index) => (
+                <div key={listing.id || index} className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all duration-300 overflow-hidden">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-12 h-12 ${getRandomColor(index)} rounded-xl flex items-center justify-center text-white font-bold shadow-lg`}>
+                          {getInitials(listing.owner?.name)}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{listing.owner?.name || 'Unknown User'}</h3>
+                          <div className="flex items-center text-sm text-gray-500">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            {listing.owner?.location || 'Location not specified'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-lg">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="ml-1 text-sm text-gray-600">4.8</span>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-lg">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="ml-1 text-sm text-gray-600">4.8</span>
-                  </div>
-                </div>
 
-                {/* Listing Content */}
-                <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                  {listing.title}
-                </h4>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
-                  {listing.description}
-                </p>
+                    <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
+                      {listing.title}
+                    </h4>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+                      {listing.description}
+                    </p>
 
-                {/* Skills Exchange */}
-                <div className="mb-6 space-y-2">
-                  <div className="flex items-center">
-                    <span className="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 text-sm font-medium rounded-full border border-green-200">
-                      Offers: {listing.skill_offered}
-                    </span>
-                  </div>
-                  {listing.skill_wanted && (
-                    <div className="flex items-center">
-                      <span className="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-200">
-                        Wants: {listing.skill_wanted}
-                      </span>
+                    <div className="mb-6 space-y-2">
+                      <div className="flex items-center">
+                        <span className="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 text-sm font-medium rounded-full border border-green-200">
+                          Offers: {listing.skill_offered || 'N/A'}
+                        </span>
+                      </div>
+                      {listing.skill_wanted && (
+                        <div className="flex items-center">
+                          <span className="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-200">
+                            Wants: {listing.skill_wanted}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* Duration */}
-                {listing.duration_hours && (
-                  <div className="flex items-center text-gray-500 mb-6">
-                    <Clock className="w-4 h-4 mr-2" />
-                    <span className="text-sm">{listing.duration_hours} hours commitment</span>
+                    {listing.duration_hours && (
+                      <div className="flex items-center text-gray-500 mb-6">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span className="text-sm">{listing.duration_hours} hours commitment</span>
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => handleRequestSwap(listing.id)}
+                        className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg group"
+                      >
+                        <ArrowRight className="w-4 h-4 mr-2 group-hover:translate-x-1 transition-transform" />
+                        Request Swap
+                      </button>
+                      <button
+                        onClick={() => handleStartChat(listing.owner_id)}
+                        className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Start Chat
+                      </button>
+                    </div>
                   </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <button
-                    onClick={() => handleRequestSwap(listing.id)}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg group"
-                  >
-                    <ArrowRight className="w-4 h-4 mr-2 group-hover:translate-x-1 transition-transform" />
-                    Request Swap
-                  </button>
-                  
-                  <button
-                    onClick={() => handleStartChat(listing.owner_id)}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Start Chat
-                  </button>
                 </div>
+              ))
+            : (
+              <div className="text-center py-16 col-span-full">
+                <p className="text-gray-500">No listings to display.</p>
               </div>
-            </div>
-          ))}
+            )
+          }
         </div>
-
-        {/* Empty State */}
-        {filteredListings.length === 0 && !loading && (
-          <div className="text-center py-16">
-            <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search className="w-16 h-16 text-gray-400" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">No listings found</h3>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              {listings.length === 0 
-                ? "No skill listings available yet. Be the first to create one!"
-                : "Try adjusting your search criteria or browse all categories"
-              }
-            </p>
-            <div className="space-x-4">
-              {listings.length > 0 && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('all');
-                  }}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              )}
-              <Link
-                to="/create-listing"
-                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all transform hover:scale-105 inline-flex items-center"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Listing
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

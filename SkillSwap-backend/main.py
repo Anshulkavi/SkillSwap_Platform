@@ -68,7 +68,7 @@ async def websocket_video(websocket: WebSocket, room_id: str):
             await ws_manager.send_video_signal(signal_data, room_id)
     except WebSocketDisconnect:
         ws_manager.disconnect_video(websocket, room_id)
-
+        
 @app.get("/")
 async def root():
     return {"message": "SkillSwap API is running!"}

@@ -51,15 +51,18 @@ Password: demo123
 - **Axios** - HTTP client for API requests
 
 ### Backend
-- **FastAPI** - Modern Python web framework
+- **FastAPI** - Modern Python web framework with automatic API docs
+- **SQLModel** - Modern SQL databases with Python (by Pydantic author)
 - **Python 3.8+** - Programming language
 - **JWT** - Authentication tokens
-- **SQLAlchemy** - Database ORM
+- **WebSocket** - Real-time chat and video communication
 - **PostgreSQL/SQLite** - Database options
 
 ### Additional Features
-- **Real-time Chat** - WebSocket integration
-- **Video Calling** - WebRTC implementation
+- **Real-time Chat** - WebSocket integration with chat rooms
+- **Video Calling** - WebRTC with WebSocket signaling
+- **SQLModel ORM** - Type-safe database operations
+- **Automatic API Docs** - FastAPI generated Swagger/ReDoc
 - **Responsive Design** - Mobile-first approach
 - **Protected Routes** - Secure authentication flow
 
@@ -84,9 +87,9 @@ npm install
 
 # Install backend dependencies
 cd backend
+pip install fastapi uvicorn sqlmodel psycopg2-binary python-multipart python-jose[cryptography] passlib[bcrypt] websockets
+# or install from requirements.txt
 pip install -r requirements.txt
-# or
-pip install fastapi uvicorn sqlalchemy psycopg2-binary python-multipart
 ```
 
 ### 3. Environment Configuration
@@ -99,22 +102,22 @@ REACT_APP_SOCKET_URL=http://localhost:8001
 
 # Backend Environment Variables (backend/.env)
 DATABASE_URL=postgresql://user:password@localhost/skillswap_db
-SECRET_KEY=your_secret_key_here
+# or for SQLite: DATABASE_URL=sqlite:///./skillswap.db
+SECRET_KEY=your_super_secret_key_here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
 ### 4. Database Setup
 ```bash
-# Create database (PostgreSQL)
+# For PostgreSQL
 createdb skillswap_db
 
-# Run database migrations
-cd backend
-python -m alembic upgrade head
+# For SQLite (automatically created)
+# No setup needed, SQLModel will create the file
 
-# Or create tables directly
-python create_tables.py
+# Tables are automatically created when you start the FastAPI server
+# Check main.py lifespan function: SQLModel.metadata.create_all(engine)
 ```
 
 ### 5. Start the Application
@@ -131,7 +134,10 @@ npm start
 The application will be available at:
 - **Frontend:** `http://localhost:3000`
 - **Backend API:** `http://localhost:8000`
-- **API Docs:** `http://localhost:8000/docs` (FastAPI auto-generated)
+- **API Docs (Swagger):** `http://localhost:8000/docs`
+- **API Docs (ReDoc):** `http://localhost:8000/redoc`
+- **WebSocket Chat:** `ws://localhost:8000/ws/chat/{user_id}`
+- **WebSocket Video:** `ws://localhost:8000/ws/video/{room_id}`
 
 ## 📁 Project Structure
 
@@ -161,17 +167,21 @@ SkillSwap_Platform/
 │   ├── App.js
 │   └── index.js
 ├── backend/
-│   ├── main.py              # FastAPI app entry point
+│   ├── main.py              # FastAPI app entry point with WebSocket
 │   ├── models/
-│   │   ├── user.py
-│   │   ├── listing.py
-│   │   └── request.py
-│   ├── routes/
-│   │   ├── auth.py
-│   │   ├── listings.py
-│   │   └── users.py
-│   ├── database.py          # Database configuration
-│   ├── schemas.py           # Pydantic models
+│   │   ├── __init__.py
+│   │   ├── database.py      # Database configuration
+│   │   └── models.py        # SQLModel definitions
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   ├── auth.py          # Authentication routes
+│   │   ├── users.py         # User management
+│   │   ├── listings.py      # Skill listings
+│   │   ├── requests.py      # Swap requests
+│   │   ├── chat.py          # Chat functionality
+│   │   └── reviews.py       # User reviews
+│   ├── websocket_manager.py # WebSocket connection manager
+│   ├── dependencies.py      # FastAPI dependencies
 │   └── requirements.txt
 ├── package.json
 └── README.md
@@ -196,31 +206,61 @@ SkillSwap_Platform/
 4. **Push to branch** - `git push origin feature/amazing-feature`
 5. **Create Pull Request**
 
-## 📚 API Documentation
+## 🏗️ Database Schema (SQLModel)
 
-### Authentication Endpoints
+The application uses SQLModel for type-safe database operations with the following main models:
+
+### Core Models
+- **User** - User profiles with skills offered/wanted
+- **Listing** - Skill exchange listings
+- **SwapRequest** - Skill exchange requests with status tracking
+- **Message** - Real-time chat messages
+- **Review** - User ratings and feedback
+
+### Key Features
+- **Type Safety** - SQLModel provides full type checking
+- **Automatic Validation** - Pydantic integration
+- **Relationship Management** - Foreign keys and joins
+- **Status Tracking** - Enum-based request statuses (pending, accepted, rejected, completed)
+
+## 📚 API Documentation
 ```
-POST /auth/signup        - User registration
-POST /auth/login         - User login (returns JWT token)
-GET  /auth/me           - Get current user profile
-POST /auth/logout       - User logout
+POST /api/auth/signup        - User registration
+POST /api/auth/login         - User login (returns JWT token)
+GET  /api/auth/me           - Get current user profile
+POST /api/auth/logout       - User logout
 ```
 
 ### Listings Endpoints
 ```
-GET    /listings/               - Get all listings (with search params)
-POST   /listings/               - Create new listing
-GET    /listings/{listing_id}   - Get specific listing
-PUT    /listings/{listing_id}   - Update listing
-DELETE /listings/{listing_id}   - Delete listing
+GET    /api/listings/               - Get all listings (with search params)
+POST   /api/listings/               - Create new listing
+GET    /api/listings/{listing_id}   - Get specific listing
+PUT    /api/listings/{listing_id}   - Update listing
+DELETE /api/listings/{listing_id}   - Delete listing
 ```
 
 ### Exchange Requests
 ```
-POST /requests/                 - Send swap request
-GET  /requests/                 - Get user's requests
-PUT  /requests/{request_id}     - Update request status
-DELETE /requests/{request_id}   - Cancel request
+POST /api/requests/                 - Send swap request
+GET  /api/requests/                 - Get user's requests
+PUT  /api/requests/{request_id}     - Update request status
+DELETE /api/requests/{request_id}   - Cancel request
+```
+
+### Chat & Communication
+```
+GET    /api/chat/messages/{user_id} - Get chat messages
+POST   /api/chat/messages/          - Send message
+WS     /ws/chat/{user_id}           - WebSocket chat connection
+WS     /ws/video/{room_id}          - WebSocket video signaling
+```
+
+### Reviews & Ratings
+```
+POST /api/reviews/              - Create review
+GET  /api/reviews/user/{id}     - Get user reviews
+PUT  /api/reviews/{review_id}   - Update review
 ```
 
 ### Interactive API Documentation

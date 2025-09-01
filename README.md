@@ -51,10 +51,11 @@ Password: demo123
 - **Axios** - HTTP client for API requests
 
 ### Backend
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
+- **FastAPI** - Modern Python web framework
+- **Python 3.8+** - Programming language
 - **JWT** - Authentication tokens
-- **MongoDB/PostgreSQL** - Database (configure as needed)
+- **SQLAlchemy** - Database ORM
+- **PostgreSQL/SQLite** - Database options
 
 ### Additional Features
 - **Real-time Chat** - WebSocket integration
@@ -65,9 +66,10 @@ Password: demo123
 ## 📦 Installation & Setup
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- Database (MongoDB/PostgreSQL)
+- Node.js (v16 or higher) for frontend
+- Python 3.8+ for backend
+- pip (Python package manager)
+- Database (PostgreSQL/SQLite)
 
 ### 1. Clone the Repository
 ```bash
@@ -80,8 +82,11 @@ cd SkillSwap_Platform
 # Install frontend dependencies
 npm install
 
-# Install backend dependencies (if separate)
-cd backend && npm install
+# Install backend dependencies
+cd backend
+pip install -r requirements.txt
+# or
+pip install fastapi uvicorn sqlalchemy psycopg2-binary python-multipart
 ```
 
 ### 3. Environment Configuration
@@ -92,28 +97,41 @@ Create a `.env` file in the root directory:
 REACT_APP_API_URL=http://localhost:8000
 REACT_APP_SOCKET_URL=http://localhost:8001
 
-# Backend Environment Variables (if using)
-DATABASE_URL=your_database_connection_string
-JWT_SECRET=your_jwt_secret_key
-PORT=8000
+# Backend Environment Variables (backend/.env)
+DATABASE_URL=postgresql://user:password@localhost/skillswap_db
+SECRET_KEY=your_secret_key_here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
 ### 4. Database Setup
 ```bash
-# Set up your database schema
-# (Add specific commands based on your database choice)
+# Create database (PostgreSQL)
+createdb skillswap_db
+
+# Run database migrations
+cd backend
+python -m alembic upgrade head
+
+# Or create tables directly
+python create_tables.py
 ```
 
 ### 5. Start the Application
 ```bash
-# Start frontend development server
-npm start
+# Start backend server (Terminal 1)
+cd backend
+uvicorn main:app --reload --port 8000
 
-# Start backend server (in separate terminal)
-cd backend && npm run dev
+# Start frontend development server (Terminal 2)
+cd ..
+npm start
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at:
+- **Frontend:** `http://localhost:3000`
+- **Backend API:** `http://localhost:8000`
+- **API Docs:** `http://localhost:8000/docs` (FastAPI auto-generated)
 
 ## 📁 Project Structure
 
@@ -142,11 +160,19 @@ SkillSwap_Platform/
 │   │   └── axios.js
 │   ├── App.js
 │   └── index.js
-├── backend/ (if applicable)
-│   ├── routes/
+├── backend/
+│   ├── main.py              # FastAPI app entry point
 │   ├── models/
-│   ├── middleware/
-│   └── server.js
+│   │   ├── user.py
+│   │   ├── listing.py
+│   │   └── request.py
+│   ├── routes/
+│   │   ├── auth.py
+│   │   ├── listings.py
+│   │   └── users.py
+│   ├── database.py          # Database configuration
+│   ├── schemas.py           # Pydantic models
+│   └── requirements.txt
 ├── package.json
 └── README.md
 ```
@@ -174,28 +200,33 @@ SkillSwap_Platform/
 
 ### Authentication Endpoints
 ```
-POST /api/auth/signup    - User registration
-POST /api/auth/login     - User login
-POST /api/auth/logout    - User logout
-GET  /api/auth/profile   - Get user profile
+POST /auth/signup        - User registration
+POST /auth/login         - User login (returns JWT token)
+GET  /auth/me           - Get current user profile
+POST /auth/logout       - User logout
 ```
 
 ### Listings Endpoints
 ```
-GET    /api/listings/           - Get all listings
-POST   /api/listings/           - Create new listing
-GET    /api/listings/:id        - Get specific listing
-PUT    /api/listings/:id        - Update listing
-DELETE /api/listings/:id        - Delete listing
+GET    /listings/               - Get all listings (with search params)
+POST   /listings/               - Create new listing
+GET    /listings/{listing_id}   - Get specific listing
+PUT    /listings/{listing_id}   - Update listing
+DELETE /listings/{listing_id}   - Delete listing
 ```
 
 ### Exchange Requests
 ```
-POST /api/requests/             - Send swap request
-GET  /api/requests/             - Get user's requests
-PUT  /api/requests/:id/accept   - Accept request
-PUT  /api/requests/:id/decline  - Decline request
+POST /requests/                 - Send swap request
+GET  /requests/                 - Get user's requests
+PUT  /requests/{request_id}     - Update request status
+DELETE /requests/{request_id}   - Cancel request
 ```
+
+### Interactive API Documentation
+FastAPI automatically generates interactive API documentation:
+- **Swagger UI:** `http://localhost:8000/docs`
+- **ReDoc:** `http://localhost:8000/redoc`
 
 ## 🔧 Configuration
 
@@ -231,9 +262,14 @@ npm run build
 # Deploy build folder to your hosting service
 ```
 
-### Backend (Heroku/Railway)
+### Backend (Heroku/Railway/DigitalOcean)
 ```bash
-# Configure environment variables on your hosting platform
+# Create requirements.txt if not exists
+pip freeze > requirements.txt
+
+# For Railway/Heroku deployment
+# Add Procfile: web: uvicorn main:app --host 0.0.0.0 --port $PORT
+
 # Deploy using your platform's deployment process
 ```
 

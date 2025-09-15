@@ -86,7 +86,8 @@ cd SkillSwap_Platform
 npm install
 
 # Install backend dependencies
-cd backend
+cd SkillSwap-backend
+.\venv\Scripts\activate
 pip install fastapi uvicorn sqlmodel psycopg2-binary python-multipart python-jose[cryptography] passlib[bcrypt] websockets
 # or install from requirements.txt
 pip install -r requirements.txt
@@ -123,11 +124,12 @@ createdb skillswap_db
 ### 5. Start the Application
 ```bash
 # Start backend server (Terminal 1)
-cd backend
+cd SkillSwap-backend
+.\venv\Scripts\activate
 uvicorn main:app --reload --port 8000
 
 # Start frontend development server (Terminal 2)
-cd ..
+cd SkillSwap-frontend
 npm start
 ```
 

@@ -21,6 +21,7 @@ class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
     is_active: bool = Field(default=True)
+    is_superuser: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
@@ -58,6 +59,7 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: int
     is_active: bool
+    is_superuser: bool
     created_at: datetime
 
 

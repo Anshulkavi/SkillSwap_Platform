@@ -6,6 +6,8 @@ from sqlmodel import Session, select
 from passlib.context import CryptContext
 from jose import jwt
 from typing import Optional
+from sqlalchemy import func
+
 
 from models.database import get_session
 from models.models import User, UserCreate, UserRead, Token
@@ -46,18 +48,46 @@ def authenticate_user(session: Session, email: str, password: str):
         return False
     return user
 
+# @router.post("/signup", response_model=UserRead)
+# async def signup(user: UserCreate, session: Session = Depends(get_session)):
+#     # Check if user already exists
+#     statement = select(User).where(User.email == user.email)
+#     db_user = session.exec(statement).first()
+#     if db_user:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Email already registered"
+#         )
+    
+#     # Create new user
+#     hashed_password = get_password_hash(user.password)
+#     db_user = User(
+#         email=user.email,
+#         name=user.name,
+#         bio=user.bio,
+#         location=user.location,
+#         avatar=user.avatar,
+#         skills_offered=user.skills_offered,
+#         skills_wanted=user.skills_wanted,
+#         hashed_password=hashed_password
+#     )
+#     session.add(db_user)
+#     session.commit()
+#     session.refresh(db_user)
+#     return db_user
+
 @router.post("/signup", response_model=UserRead)
 async def signup(user: UserCreate, session: Session = Depends(get_session)):
-    # Check if user already exists
+    # Check if email already exists
     statement = select(User).where(User.email == user.email)
     db_user = session.exec(statement).first()
     if db_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
-        )
-    
-    # Create new user
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Count existing users
+    user_count = session.exec(select(func.count(User.id))).one()
+
+    # Create user
     hashed_password = get_password_hash(user.password)
     db_user = User(
         email=user.email,
@@ -67,7 +97,8 @@ async def signup(user: UserCreate, session: Session = Depends(get_session)):
         avatar=user.avatar,
         skills_offered=user.skills_offered,
         skills_wanted=user.skills_wanted,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        is_superuser=(user_count == 0)  # 👈 first user becomes superuser
     )
     session.add(db_user)
     session.commit()

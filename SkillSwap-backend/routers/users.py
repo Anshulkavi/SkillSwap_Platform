@@ -5,7 +5,7 @@ from typing import List
 
 from models.database import get_session
 from models.models import User, UserRead, UserUpdate
-from auth.dependencies import get_current_active_user
+from auth.dependencies import get_current_active_user, get_current_superuser
 
 router = APIRouter()
 
@@ -45,3 +45,7 @@ async def update_user_profile(
     session.commit()
     session.refresh(current_user)
     return current_user
+
+@router.get("/admin-only", dependencies=[Depends(get_current_superuser)])
+async def admin_route():
+    return {"msg": "Only superusers can see this"}

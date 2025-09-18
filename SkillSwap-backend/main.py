@@ -6,6 +6,10 @@ from contextlib import asynccontextmanager
 import os
 from typing import Dict, Set
 import json
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 from routers import auth, users, listings, requests, chat, reviews
 from models.database import engine
@@ -25,6 +29,7 @@ async def lifespan(app: FastAPI):
 origins = [
     "http://localhost:5173",  # React dev server
     "http://localhost:3000",  # optional if you use another frontend
+    os.getenv("FRONTEND_URL"),
 ]
 
 app = FastAPI(title="SkillSwap API", version="1.0.0", lifespan=lifespan)

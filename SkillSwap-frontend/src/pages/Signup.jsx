@@ -499,7 +499,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { FaGoogle, FaHome } from "react-icons/fa";
 import Singn_up_img from "../assets/Singn_up_img.png";
-import GoogleLoginButton from "./Google";
+import GoogleLoginButton from "../components/GoogleButton";
 
 // And your illustration image here
 

@@ -45,6 +45,16 @@ export default function SkillSwapLanding() {
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ 1. ADD THIS EFFECT FOR AUTOMATIC REDIRECTION
+  useEffect(() => {
+    // This checks the auth status after the initial loading is done.
+    if (!loading && user) {
+      // If there is a logged-in user, redirect them to the dashboard.
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, loading, navigate]); // It runs whenever these values change.
+
+
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     element?.scrollIntoView({ behavior: 'smooth' });
@@ -61,13 +71,25 @@ export default function SkillSwapLanding() {
     }
   };
 
-  if (loading) {
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-400"></div>
+  //     </div>
+  //   );
+  // }
+
+  // ✅ 2. UPDATE THIS CONDITION
+  // Show the spinner if we are still loading OR if a user exists
+  // (because they will be redirected shortly). This prevents the page from flashing.
+  if (loading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-400"></div>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white overflow-hidden">

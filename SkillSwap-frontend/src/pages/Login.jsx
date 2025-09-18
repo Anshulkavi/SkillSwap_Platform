@@ -216,10 +216,6 @@
 
 // export default Login;
 
-
-
-
-
 // final
 
 import React, { useState } from "react";
@@ -228,7 +224,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import Login_img from "../assets/Login_img.png";
-import GoogleLoginButton from "./Google";
+import GoogleLoginButton from "../components/GoogleButton";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -566,7 +562,7 @@ const Login = () => {
                   Sign in with Google
                 </motion.button> */}
                 <div className="pt-4">
-                  <GoogleLoginButton />
+                  <GoogleLoginButton onClick={() => setError("")} />{" "}
                 </div>
 
                 {/* Sign Up Link */}

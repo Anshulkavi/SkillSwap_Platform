@@ -1,5 +1,3 @@
-// Mock Data for SkillSwap+ Platform
-
 // User Data
 export const mockUser = {
   id: 1,

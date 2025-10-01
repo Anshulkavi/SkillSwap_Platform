@@ -1,44 +1,23 @@
-// // src/components/ProtectedRoute.js
-// import React from 'react';
-// import { Navigate } from 'react-router-dom';
-// import { useAuth } from '../contexts/AuthContext';
-
-// const ProtectedRoute = ({ children }) => {
-//   const { user, loading } = useAuth();
-
-//   // Show loading spinner while checking auth status
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen flex items-center justify-center">
-//         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-//       </div>
-//     );
-//   }
-
-//   // If user is not authenticated, redirect to login
-//   if (!user) {
-//     return <Navigate to="/login" replace />;
-//   }
-
-//   // If user is authenticated, render the protected component
-//   return children;
-// };
-
-// export default ProtectedRoute;
-
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-// This would typically check authentication status
-const ProtectedRoute = ({ children, user }) => {
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  // For demo purposes, we'll assume user is always authenticated
-  // In a real app, you'd check authentication status here
-  const isAuthenticated = user && user.id;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (!isAuthenticated) {
-    // Redirect to login page with the attempted location
+  if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

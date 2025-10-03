@@ -1,0 +1,192 @@
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+
+from models.database import get_db
+from models.models import User, Listing, Request
+from schemas import (
+    ListingCreate, ListingResponse, RequestCreate, 
+    RequestResponse, MessageResponse
+)
+from auth.dependencies import get_current_user
+
+router = APIRouter()
+
+@router.get("/listings", response_model=List[ListingResponse])
+async def get_skill_listings(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    category: Optional[str] = None,
+    skill_offered: Optional[str] = None,
+    skill_wanted: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all skill exchange listings with filters"""
+    query = db.query(Listing).filter(Listing.is_active == True)
+    
+    if category:
+        query = query.filter(Listing.tags.contains([category]))
+    if skill_offered:
+        query = query.filter(Listing.skill_offered.ilike(f"%{skill_offered}%"))
+    if skill_wanted:
+        query = query.filter(Listing.skill_wanted.ilike(f"%{skill_wanted}%"))
+    
+    listings = query.offset(skip).limit(limit).all()
+    return listings
+
+@router.post("/listings", response_model=ListingResponse, status_code=status.HTTP_201_CREATED)
+async def create_skill_listing(
+    listing_data: ListingCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new skill exchange listing"""
+    new_listing = Listing(
+        user_id=current_user.id,
+        **listing_data.dict()
+    )
+    
+    db.add(new_listing)
+    db.commit()
+    db.refresh(new_listing)
+    return new_listing
+
+@router.get("/listings/{listing_id}", response_model=ListingResponse)
+async def get_listing(
+    listing_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get specific listing by ID"""
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Listing not found"
+        )
+    return listing
+
+@router.put("/listings/{listing_id}", response_model=ListingResponse)
+async def update_listing(
+    listing_id: int,
+    updates: ListingCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update own listing"""
+    listing = db.query(Listing).filter(
+        Listing.id == listing_id,
+        Listing.user_id == current_user.id
+    ).first()
+    
+    if not listing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Listing not found or unauthorized"
+        )
+    
+    for field, value in updates.dict().items():
+        setattr(listing, field, value)
+    
+    db.commit()
+    db.refresh(listing)
+    return listing
+
+@router.delete("/listings/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_listing(
+    listing_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete own listing"""
+    listing = db.query(Listing).filter(
+        Listing.id == listing_id,
+        Listing.user_id == current_user.id
+    ).first()
+    
+    if not listing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Listing not found or unauthorized"
+        )
+    
+    db.delete(listing)
+    db.commit()
+    return None
+
+@router.post("/requests", response_model=RequestResponse, status_code=status.HTTP_201_CREATED)
+async def create_exchange_request(
+    request_data: RequestCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a skill exchange request"""
+    listing = db.query(Listing).filter(Listing.id == request_data.listing_id).first()
+    if not listing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Listing not found"
+        )
+    
+    new_request = Request(
+        from_user_id=current_user.id,
+        **request_data.dict()
+    )
+    
+    db.add(new_request)
+    db.commit()
+    db.refresh(new_request)
+    return new_request
+
+@router.get("/requests/sent", response_model=List[RequestResponse])
+async def get_sent_requests(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get requests sent by current user"""
+    requests = db.query(Request).filter(
+        Request.from_user_id == current_user.id
+    ).all()
+    return requests
+
+@router.get("/requests/received", response_model=List[RequestResponse])
+async def get_received_requests(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get requests received by current user"""
+    requests = db.query(Request).filter(
+        Request.to_user_id == current_user.id
+    ).all()
+    return requests
+
+@router.put("/requests/{request_id}/status")
+async def update_request_status(
+    request_id: int,
+    status: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update request status (accept/reject)"""
+    request = db.query(Request).filter(
+        Request.id == request_id,
+        Request.to_user_id == current_user.id
+    ).first()
+    
+    if not request:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Request not found or unauthorized"
+        )
+    
+    if status not in ["pending", "accepted", "rejected", "completed"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid status"
+        )
+    
+    request.status = status
+    db.commit()
+    
+    return {"message": f"Request status updated to {status}"}

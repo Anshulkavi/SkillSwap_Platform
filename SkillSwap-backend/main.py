@@ -1,79 +1,56 @@
 # main.py
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import SQLModel, create_engine, Session
 from contextlib import asynccontextmanager
-import os
-from typing import Dict, Set
-import json
-from dotenv import load_dotenv
 
-
-load_dotenv()
-
-from routers import auth, users, listings, requests, chat, reviews
-from models.database import engine
-from websocket_manager import WebSocketManager
-
-# WebSocket manager for real-time features
-ws_manager = WebSocketManager()
+from models.database import engine, Base
+from routers import (
+    login, signup, profile, skill_exchange, 
+    community, leaderboard, videos, chat, video_call
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables
-    SQLModel.metadata.create_all(engine)
+    # Startup: Create database tables
+    Base.metadata.create_all(bind=engine)
     yield
+    # Shutdown: cleanup if needed
 
-
-# CORS allowed origins
-origins = [
-    "http://localhost:5173",  # React dev server
-    "http://localhost:3000",  # optional if you use another frontend
-    os.getenv("FRONTEND_URL"),
-]
-
-app = FastAPI(title="SkillSwap API", version="1.0.0", lifespan=lifespan)
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,      # needed if you use cookies or auth
-    allow_methods=["*"],         # allow GET, POST, etc.
-    allow_headers=["*"],         # allow all headers
+app = FastAPI(
+    title="SkillSwap API",
+    description="Backend API for SkillSwap platform",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
-# Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(users.router, prefix="/api/users", tags=["users"])
-app.include_router(listings.router, prefix="/api/listings", tags=["listings"])
-app.include_router(requests.router, prefix="/api/requests", tags=["requests"])
-app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
-app.include_router(reviews.router, prefix="/api/reviews", tags=["reviews"])
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# WebSocket endpoints
-@app.websocket("/ws/chat/{user_id}")
-async def websocket_chat(websocket: WebSocket, user_id: int):
-    await ws_manager.connect_chat(websocket, user_id)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            message_data = json.loads(data)
-            await ws_manager.send_message(message_data)
-    except WebSocketDisconnect:
-        ws_manager.disconnect_chat(user_id)
+# Include routers with prefixes matching frontend expectations
+app.include_router(login.router, prefix="/api", tags=["Authentication"])
+app.include_router(signup.router, prefix="/api", tags=["Authentication"])
+app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])
+app.include_router(skill_exchange.router, prefix="/api/skill-exchange", tags=["Skill Exchange"])
+app.include_router(community.router, prefix="/api/community", tags=["Community"])
+app.include_router(leaderboard.router, prefix="/api/leaderboard", tags=["Leaderboard"])
+app.include_router(videos.router, prefix="/api/videos", tags=["Videos"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(video_call.router, prefix="/api/video-call", tags=["Video Call"])
 
-@app.websocket("/ws/video/{room_id}")
-async def websocket_video(websocket: WebSocket, room_id: str):
-    await ws_manager.connect_video(websocket, room_id)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            signal_data = json.loads(data)
-            await ws_manager.send_video_signal(signal_data, room_id)
-    except WebSocketDisconnect:
-        ws_manager.disconnect_video(websocket, room_id)
-        
 @app.get("/")
 async def root():
-    return {"message": "SkillSwap API is running!"}
+    return {
+        "message": "SkillSwap API",
+        "version": "1.0.0",
+        "status": "running"
+    }
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}

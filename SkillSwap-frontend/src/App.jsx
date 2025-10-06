@@ -72,12 +72,15 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 
 // Import Pages
+// Import Pages
 import HomePage from './pages/HomePage';
 import VideosPage from './pages/VideosPage';
+import VideoDetailPage from './pages/VideoDetailPage'; // <-- add this
 import SkillExchangePage from './pages/SkillExchangePage';
 import CommunityPage from './pages/CommunityPage';
-import LeaderboardPage from './pages/LeaderboardPage';
+// import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/Settings'; // if used
 
 const App = () => {
   return (

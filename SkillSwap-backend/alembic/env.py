@@ -1,34 +1,23 @@
-# alembic/env.py
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config, pool
-from sqlmodel import SQLModel
-from models.models import *  # import all your models
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
 from alembic import context
 import os
-from dotenv import load_dotenv
+import sys
 
-# Load .env
-load_dotenv()
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-# Alembic config object
+from models.database import Base
+from models.models import *
+
 config = context.config
 
-# Override URL from .env
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL is not set in .env")
-
-config.set_main_option("sqlalchemy.url", DATABASE_URL.replace("%", "%%"))
-
-# Logging setup
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# target metadata for 'autogenerate'
-target_metadata = SQLModel.metadata
+target_metadata = Base.metadata
 
-# Offline migrations
-def run_migrations_offline():
+def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
@@ -40,8 +29,7 @@ def run_migrations_offline():
     with context.begin_transaction():
         context.run_migrations()
 
-# Online migrations
-def run_migrations_online():
+def run_migrations_online() -> None:
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -50,14 +38,13 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
+            connection=connection, 
+            target_metadata=target_metadata
         )
 
         with context.begin_transaction():
             context.run_migrations()
 
-# Run based on mode
 if context.is_offline_mode():
     run_migrations_offline()
 else:

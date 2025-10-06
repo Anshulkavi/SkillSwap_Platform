@@ -1,5 +1,8 @@
+# routers/skill_exchange.py
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+# 👇 NEW: Add selectinload to imports
+from sqlalchemy.orm import Session, selectinload 
 from typing import List, Optional
 
 from models.database import get_db
@@ -12,6 +15,7 @@ from auth.dependencies import get_current_user
 
 router = APIRouter()
 
+# 👇 UPDATED: This function is replaced with a new version
 @router.get("/listings", response_model=List[ListingResponse])
 async def get_skill_listings(
     skip: int = Query(0, ge=0),
@@ -23,7 +27,9 @@ async def get_skill_listings(
     current_user: User = Depends(get_current_user)
 ):
     """Get all skill exchange listings with filters"""
-    query = db.query(Listing).filter(Listing.is_active == True)
+    query = db.query(Listing).options(
+        selectinload(Listing.user)  # Eagerly load the user details
+    ).filter(Listing.is_active == True)
     
     if category:
         query = query.filter(Listing.tags.contains([category]))
@@ -33,6 +39,14 @@ async def get_skill_listings(
         query = query.filter(Listing.skill_wanted.ilike(f"%{skill_wanted}%"))
     
     listings = query.offset(skip).limit(limit).all()
+
+    # Get a set of IDs for listings liked by the current user for efficient lookup
+    liked_listing_ids = {l.id for l in current_user.liked_listings}
+    
+    # Process listings to set the 'is_liked' flag
+    for listing in listings:
+        listing.is_liked = listing.id in liked_listing_ids
+            
     return listings
 
 @router.post("/listings", response_model=ListingResponse, status_code=status.HTTP_201_CREATED)
@@ -46,7 +60,6 @@ async def create_skill_listing(
         user_id=current_user.id,
         **listing_data.dict()
     )
-    
     db.add(new_listing)
     db.commit()
     db.refresh(new_listing)
@@ -79,16 +92,13 @@ async def update_listing(
         Listing.id == listing_id,
         Listing.user_id == current_user.id
     ).first()
-    
     if not listing:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Listing not found or unauthorized"
         )
-    
     for field, value in updates.dict().items():
         setattr(listing, field, value)
-    
     db.commit()
     db.refresh(listing)
     return listing
@@ -104,16 +114,47 @@ async def delete_listing(
         Listing.id == listing_id,
         Listing.user_id == current_user.id
     ).first()
-    
     if not listing:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Listing not found or unauthorized"
         )
-    
     db.delete(listing)
     db.commit()
     return None
+
+# 👇 NEW: Add these two new endpoints to the bottom of the file
+@router.post("/listings/{listing_id}/like", response_model=MessageResponse)
+async def like_listing(
+    listing_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Add the listing to the user's liked list if it's not already there
+    if listing not in current_user.liked_listings:
+        current_user.liked_listings.append(listing)
+        db.commit()
+    return {"message": "Listing liked successfully"}
+
+@router.delete("/listings/{listing_id}/like", response_model=MessageResponse)
+async def unlike_listing(
+    listing_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    # Remove the listing from the user's liked list if it's there
+    if listing in current_user.liked_listings:
+        current_user.liked_listings.remove(listing)
+        db.commit()
+    return {"message": "Listing unliked successfully"}
 
 @router.post("/requests", response_model=RequestResponse, status_code=status.HTTP_201_CREATED)
 async def create_exchange_request(

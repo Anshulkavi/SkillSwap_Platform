@@ -1,106 +1,101 @@
-# routers/chat.py
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
+from sqlalchemy.orm import Session
 from typing import List
+import json
 
-from models.database import get_session
-from models.models import Message, MessageCreate, MessageRead, User
-from auth.dependencies import get_current_active_user
+from models.database import get_db
+from models.models import ChatMessage, User
+from websocket_manager import manager
 
 router = APIRouter()
 
-@router.post("/", response_model=MessageRead)
-async def send_message(
-    message: MessageCreate,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+@router.websocket("/ws/{room_id}")
+async def chat_websocket(
+    websocket: WebSocket,
+    room_id: str,
+    token: str = Query(...),
+    db: Session = Depends(get_db)
 ):
-    # Check if receiver exists
-    receiver = session.get(User, message.receiver_id)
-    if not receiver:
-        raise HTTPException(status_code=404, detail="Receiver not found")
+    """WebSocket endpoint for real-time chat"""
+    await manager.connect(websocket, room_id)
     
-    db_message = Message(**message.dict(), sender_id=current_user.id)
-    session.add(db_message)
-    session.commit()
-    session.refresh(db_message)
-    return db_message
-
-@router.get("/conversations", response_model=List[dict])
-async def get_conversations(
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
-):
-    # Get unique conversation partners
-    statement = select(Message).where(
-        (Message.sender_id == current_user.id) | (Message.receiver_id == current_user.id)
-    )
-    messages = session.exec(statement).all()
-    
-    # Group by conversation partner
-    conversations = {}
-    for message in messages:
-        partner_id = message.receiver_id if message.sender_id == current_user.id else message.sender_id
-        if partner_id not in conversations:
-            partner = session.get(User, partner_id)
-            conversations[partner_id] = {
-                "user": partner,
-                "last_message": message,
-                "unread_count": 0
-            }
-        else:
-            if message.timestamp > conversations[partner_id]["last_message"].timestamp:
-                conversations[partner_id]["last_message"] = message
-    
-    # Count unread messages
-    for partner_id in conversations:
-        unread_statement = select(Message).where(
-            Message.sender_id == partner_id,
-            Message.receiver_id == current_user.id,
-            Message.read_status == False
+    try:
+        # Send chat history
+        history = db.query(ChatMessage).filter(
+            ChatMessage.room_id == room_id
+        ).order_by(ChatMessage.created_at.desc()).limit(50).all()
+        
+        await websocket.send_json({
+            "type": "history",
+            "messages": [
+                {
+                    "content": msg.content,
+                    "sender_id": msg.sender_id,
+                    "timestamp": msg.created_at.isoformat()
+                }
+                for msg in reversed(history)
+            ]
+        })
+        
+        while True:
+            data = await websocket.receive_text()
+            message_data = json.loads(data)
+            
+            # Save message to database
+            new_message = ChatMessage(
+                room_id=room_id,
+                sender_id=message_data.get("sender_id"),
+                content=message_data.get("content"),
+                message_type=message_data.get("message_type", "text")
+            )
+            db.add(new_message)
+            db.commit()
+            
+            # Get sender info
+            sender = db.query(User).filter(
+                User.id == message_data.get("sender_id")
+            ).first()
+            
+            # Broadcast to room
+            await manager.broadcast(
+                room_id,
+                {
+                    "type": "message",
+                    "content": message_data.get("content"),
+                    "sender_id": message_data.get("sender_id"),
+                    "sender_name": sender.name if sender else "Unknown",
+                    "timestamp": new_message.created_at.isoformat()
+                }
+            )
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, room_id)
+        await manager.broadcast(
+            room_id,
+            {"type": "system", "message": "User disconnected"}
         )
-        unread_messages = session.exec(unread_statement).all()
-        conversations[partner_id]["unread_count"] = len(unread_messages)
-    
-    return list(conversations.values())
 
-@router.get("/{user_id}", response_model=List[MessageRead])
+@router.get("/history/{room_id}")
 async def get_chat_history(
-    user_id: int,
-    limit: int = 50,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
+    room_id: str,
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db)
 ):
-    statement = select(Message).where(
-        ((Message.sender_id == current_user.id) & (Message.receiver_id == user_id)) |
-        ((Message.sender_id == user_id) & (Message.receiver_id == current_user.id))
-    ).order_by(Message.timestamp.desc()).limit(limit)
+    """Get chat history for a room"""
+    messages = db.query(ChatMessage).filter(
+        ChatMessage.room_id == room_id
+    ).order_by(ChatMessage.created_at.desc()).limit(limit).all()
     
-    messages = session.exec(statement).all()
-    
-    # Mark messages as read
-    for message in messages:
-        if message.receiver_id == current_user.id and not message.read_status:
-            message.read_status = True
-            session.add(message)
-    
-    session.commit()
-    return list(reversed(messages))  # Return in chronological order
-
-@router.put("/{message_id}/read")
-async def mark_message_read(
-    message_id: int,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_active_user)
-):
-    message = session.get(Message, message_id)
-    if not message:
-        raise HTTPException(status_code=404, detail="Message not found")
-    
-    if message.receiver_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    message.read_status = True
-    session.add(message)
-    session.commit()
-    return {"message": "Message marked as read"}
+    return {
+        "room_id": room_id,
+        "messages": [
+            {
+                "id": msg.id,
+                "content": msg.content,
+                "sender_id": msg.sender_id,
+                "message_type": msg.message_type,
+                "timestamp": msg.created_at.isoformat()
+            }
+            for msg in reversed(messages)
+        ]
+    }

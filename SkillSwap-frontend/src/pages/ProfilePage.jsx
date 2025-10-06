@@ -338,43 +338,41 @@ export default function ProfilePage() {
                   className="grid lg:grid-cols-3 gap-8"
                 >
                   <div className="lg:col-span-2 space-y-8">
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between md:space-x-8">
-                      {/* My Skills */}
-                      <div className="flex-1 mb-8 md:mb-0">
-                        <h3 className="text-2xl font-bold text-slate-100 mb-6 ">
-                          My Skills
-                        </h3>
-                        <div className="flex flex-wrap gap-3">
-                          {editedProfile.skills.map((skill, idx) => (
-                            <motion.span
-                              key={idx}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              className="bg-purple-500/20 text-purple-300 px-3 py-2 rounded-full text-sm font-medium"
-                            >
-                              {skill}
-                            </motion.span>
-                          ))}
-                        </div>
+                    {/* My Skills */}
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-100 mb-6">
+                        My Skills
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {editedProfile.skills.map((skill, idx) => (
+                          <motion.span
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-purple-500/20 text-purple-300 px-3 py-2 rounded-full text-sm font-medium"
+                          >
+                            {skill}
+                          </motion.span>
+                        ))}
                       </div>
+                    </div>
 
-                      {/* Skills I Want to Learn */}
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-bold text-slate-100 mb-6">
-                          Skills I Want to Learn
-                        </h3>
-                        <div className="flex flex-wrap gap-3">
-                          {editedProfile.skillsToLearn.map((skill, idx) => (
-                            <motion.span
-                              key={idx}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              className="bg-indigo-500/20 text-indigo-300 px-3 py-2 rounded-full text-sm font-medium"
-                            >
-                              {skill}
-                            </motion.span>
-                          ))}
-                        </div>
+                    {/* Skills I Want to Learn */}
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-100 mb-6">
+                        Skills I Want to Learn
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {editedProfile.skillsToLearn.map((skill, idx) => (
+                          <motion.span
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-indigo-500/20 text-indigo-300 px-3 py-2 rounded-full text-sm font-medium"
+                          >
+                            {skill}
+                          </motion.span>
+                        ))}
                       </div>
                     </div>
 

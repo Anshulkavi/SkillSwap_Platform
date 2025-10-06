@@ -1,959 +1,772 @@
-// import React, { useState } from 'react';
-// import { 
-//   Settings, Video, Users, Clock, Star, Award, Plus, 
-//   MessageCircle, Calendar
-// } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Settings,
+  Video,
+  Users,
+  Award,
+  Plus,
+  MessageCircle,
+  Calendar,
+  Upload,
+} from "lucide-react";
+import EditProfile from "../components/EditProfile";
+import { useAuth } from "../context/AuthContext";
 
-// // Mock videos for user profile
-// const userVideos = [
-//   {
-//     id: 1,
-//     title: 'Advanced React Hooks Tutorial',
-//     thumbnail: '/api/placeholder/300/200',
-//     views: 12500,
-//     likes: 890,
-//     duration: '15:32',
-//     uploadDate: '2 weeks ago'
-//   },
-//   {
-//     id: 2,
-//     title: 'UI/UX Design Principles',
-//     thumbnail: '/api/placeholder/300/200',
-//     views: 8300,
-//     likes: 654,
-//     duration: '22:15',
-//     uploadDate: '1 month ago'
-//   },
-//   {
-//     id: 3,
-//     title: 'JavaScript Best Practices',
-//     thumbnail: '/api/placeholder/300/200',
-//     views: 15600,
-//     likes: 1200,
-//     duration: '18:45',
-//     uploadDate: '3 weeks ago'
-//   },
-//   {
-//     id: 4,
-//     title: 'Responsive Web Design',
-//     thumbnail: '/api/placeholder/300/200',
-//     views: 9400,
-//     likes: 756,
-//     duration: '28:30',
-//     uploadDate: '1 week ago'
-//   }
-// ];
-
-// const ProfilePage = ({ user }) => {
-//   const [activeTab, setActiveTab] = useState('overview');
-//   const [isEditing, setIsEditing] = useState(false);
-//   const [editedProfile, setEditedProfile] = useState({
-//     name: user.name,
-//     bio: 'Passionate full-stack developer and UI/UX enthusiast. Love sharing knowledge and learning new technologies.',
-//     location: 'San Francisco, CA',
-//     website: 'https://sarahjohnson.dev',
-//     skills: [...user.skillsOffered, ...user.skillsLearning],
-//     socialLinks: {
-//       twitter: '@sarahdev',
-//       linkedin: 'linkedin.com/in/sarahj',
-//       github: 'github.com/sarahj'
-//     }
-//   });
-
-//   const tabs = [
-//     { id: 'overview', label: 'Overview', icon: Users },
-//     { id: 'videos', label: 'My Videos', icon: Video },
-//     { id: 'achievements', label: 'Achievements', icon: Award },
-//     { id: 'settings', label: 'Settings', icon: Settings }
-//   ];
-
-//   const handleSaveProfile = () => {
-//     // Handle profile save logic here
-//     console.log('Saving profile:', editedProfile);
-//     setIsEditing(false);
-//   };
-
-//   const recentActivities = [
-//     {
-//       type: 'video',
-//       action: 'Published "Advanced React Patterns" video',
-//       timestamp: '2 days ago',
-//       icon: Video
-//     },
-//     {
-//       type: 'session',
-//       action: 'Completed mentoring session with John Doe',
-//       timestamp: '5 days ago',
-//       icon: Users
-//     },
-//     {
-//       type: 'community',
-//       action: 'Answered 3 questions in Programming forum',
-//       timestamp: '1 week ago',
-//       icon: MessageCircle
-//     },
-//     {
-//       type: 'achievement',
-//       action: 'Earned "Community Leader" badge',
-//       timestamp: '2 weeks ago',
-//       icon: Award
-//     }
-//   ];
-
-//   return (
-//     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-//       {/* Profile Header */}
-//       <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-//         <div className="bg-gradient-to-r from-purple-600 to-blue-600 h-32"></div>
-//         <div className="relative px-6 pb-6">
-//           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
-//             <img
-//               src={user.avatar}
-//               alt={user.name}
-//               className="h-24 w-24 rounded-full border-4 border-white -mt-12 bg-white"
-//             />
-//             <div className="flex-1">
-//               <h1 className="text-2xl font-bold text-gray-800">{editedProfile.name}</h1>
-//               <p className="text-gray-600">Level {user.level} • {user.xp.toLocaleString()} XP</p>
-//               <p className="text-gray-600 mt-1">{editedProfile.location}</p>
-//               {editedProfile.bio && (
-//                 <p className="text-gray-700 mt-2 max-w-2xl">{editedProfile.bio}</p>
-//               )}
-//               <div className="flex flex-wrap gap-2 mt-3">
-//                 {user.badges.slice(0, 3).map((badge, index) => (
-//                   <span key={index} className="bg-purple-100 text-purple-800 text-sm px-2 py-1 rounded-full">
-//                     {badge}
-//                   </span>
-//                 ))}
-//               </div>
-//             </div>
-//             <div className="flex space-x-3">
-//               <button 
-//                 onClick={() => setIsEditing(true)}
-//                 className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-//               >
-//                 Edit Profile
-//               </button>
-//               <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-//                 <Settings className="h-4 w-4" />
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Stats Overview */}
-//       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-//         <div className="bg-white p-6 rounded-xl shadow-md text-center">
-//           <Video className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-//           <div className="text-2xl font-bold text-gray-800">23</div>
-//           <div className="text-sm text-gray-600">Videos Created</div>
-//         </div>
-//         <div className="bg-white p-6 rounded-xl shadow-md text-center">
-//           <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-//           <div className="text-2xl font-bold text-gray-800">156</div>
-//           <div className="text-sm text-gray-600">Students Taught</div>
-//         </div>
-//         <div className="bg-white p-6 rounded-xl shadow-md text-center">
-//           <Clock className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-//           <div className="text-2xl font-bold text-gray-800">42h</div>
-//           <div className="text-sm text-gray-600">Teaching Hours</div>
-//         </div>
-//         <div className="bg-white p-6 rounded-xl shadow-md text-center">
-//           <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-//           <div className="text-2xl font-bold text-gray-800">4.9</div>
-//           <div className="text-sm text-gray-600">Average Rating</div>
-//         </div>
-//       </div>
-
-//       {/* Tab Navigation */}
-//       <div className="bg-white rounded-xl shadow-md mb-8">
-//         <div className="border-b border-gray-200">
-//           <nav className="flex space-x-8 px-6">
-//             {tabs.map((tab) => {
-//               const IconComponent = tab.icon;
-//               return (
-//                 <button
-//                   key={tab.id}
-//                   onClick={() => setActiveTab(tab.id)}
-//                   className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-//                     activeTab === tab.id
-//                       ? 'border-purple-500 text-purple-600'
-//                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-//                   }`}
-//                 >
-//                   <IconComponent className="h-4 w-4" />
-//                   <span>{tab.label}</span>
-//                 </button>
-//               );
-//             })}
-//           </nav>
-//         </div>
-
-//         <div className="p-6">
-//           {/* Overview Tab */}
-//           {activeTab === 'overview' && (
-//             <div className="grid lg:grid-cols-3 gap-8">
-//               <div className="lg:col-span-2 space-y-6">
-//                 {/* Skills Section */}
-//                 <div>
-//                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Skills I Offer</h3>
-//                   <div className="flex flex-wrap gap-3">
-//                     {user.skillsOffered.map((skill, index) => (
-//                       <span key={index} className="bg-green-100 text-green-800 px-3 py-2 rounded-full text-sm font-medium">
-//                         {skill}
-//                       </span>
-//                     ))}
-//                   </div>
-//                 </div>
-                
-//                 <div>
-//                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Skills I'm Learning</h3>
-//                   <div className="flex flex-wrap gap-3">
-//                     {user.skillsLearning.map((skill, index) => (
-//                       <span key={index} className="bg-blue-100 text-blue-800 px-3 py-2 rounded-full text-sm font-medium">
-//                         {skill}
-//                       </span>
-//                     ))}
-//                   </div>
-//                 </div>
-
-//                 {/* Recent Activity */}
-//                 <div>
-//                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
-//                   <div className="space-y-3">
-//                     {recentActivities.map((activity, index) => {
-//                       const IconComponent = activity.icon;
-//                       return (
-//                         <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-//                           <div className="bg-white p-2 rounded-lg">
-//                             <IconComponent className="h-4 w-4 text-purple-600" />
-//                           </div>
-//                           <div className="flex-1">
-//                             <p className="text-sm font-medium text-gray-800">{activity.action}</p>
-//                             <p className="text-xs text-gray-500">{activity.timestamp}</p>
-//                           </div>
-//                         </div>
-//                       );
-//                     })}
-//                   </div>
-//                 </div>
-//               </div>
-
-//               <div className="space-y-6">
-//                 {/* Quick Actions */}
-//                 <div className="bg-gray-50 p-4 rounded-lg">
-//                   <h3 className="font-semibold text-gray-800 mb-3">Quick Actions</h3>
-//                   <div className="space-y-2">
-//                     <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2">
-//                       <Plus className="h-4 w-4" />
-//                       <span>Upload Video</span>
-//                     </button>
-//                     <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2">
-//                       <Calendar className="h-4 w-4" />
-//                       <span>Schedule Session</span>
-//                     </button>
-//                     <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2">
-//                       <MessageCircle className="h-4 w-4" />
-//                       <span>Message Students</span>
-//                     </button>
-//                   </div>
-//                 </div>
-
-//                 {/* Learning Progress */}
-//                 <div className="bg-white border border-gray-200 p-4 rounded-lg">
-//                   <h3 className="font-semibold text-gray-800 mb-3">Learning Progress</h3>
-//                   <div className="space-y-3">
-//                     <div>
-//                       <div className="flex justify-between items-center mb-1">
-//                         <span className="text-sm font-medium text-gray-700">React Development</span>
-//                         <span className="text-sm text-gray-500">85%</span>
-//                       </div>
-//                       <div className="bg-gray-200 rounded-full h-2">
-//                         <div className="bg-purple-600 h-2 rounded-full" style={{ width: '85%' }}></div>
-//                       </div>
-//                     </div>
-//                     <div>
-//                       <div className="flex justify-between items-center mb-1">
-//                         <span className="text-sm font-medium text-gray-700">UI/UX Design</span>
-//                         <span className="text-sm text-gray-500">60%</span>
-//                       </div>
-//                       <div className="bg-gray-200 rounded-full h-2">
-//                         <div className="bg-blue-600 h-2 rounded-full" style={{ width: '60%' }}></div>
-//                       </div>
-//                     </div>
-//                     <div>
-//                       <div className="flex justify-between items-center mb-1">
-//                         <span className="text-sm font-medium text-gray-700">Photography</span>
-//                         <span className="text-sm text-gray-500">25%</span>
-//                       </div>
-//                       <div className="bg-gray-200 rounded-full h-2">
-//                         <div className="bg-green-600 h-2 rounded-full" style={{ width: '25%' }}></div>
-//                       </div>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-
-//           {/* Videos Tab */}
-//           {activeTab === 'videos' && (
-//             <div>
-//               <div className="flex justify-between items-center mb-6">
-//                 <h3 className="text-lg font-semibold text-gray-800">My Videos ({userVideos.length})</h3>
-//                 <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center space-x-2">
-//                   <Plus className="h-4 w-4" />
-//                   <span>Upload New Video</span>
-//                 </button>
-//               </div>
-//               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-//                 {userVideos.map((video) => (
-//                   <div key={video.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-//                     <div className="relative">
-//                       <img
-//                         src={video.thumbnail}
-//                         alt={video.title}
-//                         className="w-full h-36 object-cover"
-//                       />
-//                       <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 rounded">
-//                         {video.duration}
-//                       </div>
-//                     </div>
-//                     <div className="p-4">
-//                       <h4 className="font-medium text-gray-800 mb-2 line-clamp-2">{video.title}</h4>
-//                       <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-//                         <span>{video.views.toLocaleString()} views</span>
-//                         <span>{video.likes} likes</span>
-//                       </div>
-//                       <p className="text-xs text-gray-500">Uploaded {video.uploadDate}</p>
-//                     </div>
-//                   </div>
-//                 ))}
-//               </div>
-//             </div>
-//           )}
-
-//           {/* Achievements Tab */}
-//           {activeTab === 'achievements' && (
-//             <div>
-//               <h3 className="text-lg font-semibold text-gray-800 mb-6">Achievements & Badges</h3>
-//               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-//                 {user.badges.map((badge, index) => (
-//                   <div key={index} className="bg-gradient-to-br from-yellow-100 to-orange-100 p-6 rounded-xl border border-yellow-200">
-//                     <div className="text-center">
-//                       <Award className="h-12 w-12 text-yellow-600 mx-auto mb-3" />
-//                       <h4 className="font-semibold text-gray-800 mb-2">{badge}</h4>
-//                       <p className="text-sm text-gray-600">Earned by completing specific milestones</p>
-//                     </div>
-//                   </div>
-//                 ))}
-//               </div>
-
-//               {/* Progress Towards Next Badges */}
-//               <div className="bg-gray-50 p-6 rounded-lg">
-//                 <h4 className="font-semibold text-gray-800 mb-4">Progress Towards Next Badges</h4>
-//                 <div className="space-y-4">
-//                   <div>
-//                     <div className="flex justify-between items-center mb-2">
-//                       <span className="text-sm font-medium text-gray-700">Super Mentor (Teach 100 students)</span>
-//                       <span className="text-sm text-gray-500">156/100 ✓</span>
-//                     </div>
-//                     <div className="bg-green-200 rounded-full h-2">
-//                       <div className="bg-green-600 h-2 rounded-full w-full"></div>
-//                     </div>
-//                   </div>
-//                   <div>
-//                     <div className="flex justify-between items-center mb-2">
-//                       <span className="text-sm font-medium text-gray-700">Video Master (Upload 50 videos)</span>
-//                       <span className="text-sm text-gray-500">23/50</span>
-//                     </div>
-//                     <div className="bg-gray-200 rounded-full h-2">
-//                       <div className="bg-purple-600 h-2 rounded-full" style={{ width: '46%' }}></div>
-//                     </div>
-//                   </div>
-//                   <div>
-//                     <div className="flex justify-between items-center mb-2">
-//                       <span className="text-sm font-medium text-gray-700">Community Champion (Get 1000 likes)</span>
-//                       <span className="text-sm text-gray-500">743/1000</span>
-//                     </div>
-//                     <div className="bg-gray-200 rounded-full h-2">
-//                       <div className="bg-blue-600 h-2 rounded-full" style={{ width: '74%' }}></div>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-
-//           {/* Settings Tab */}
-//           {activeTab === 'settings' && (
-//             <div className="space-y-8">
-//               {/* Profile Settings */}
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Profile Settings</h3>
-//                 {isEditing ? (
-//                   <div className="bg-blue-50 p-6 rounded-lg space-y-4">
-//                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                       <div>
-//                         <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
-//                         <input
-//                           type="text"
-//                           value={editedProfile.name}
-//                           onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
-//                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-//                         />
-//                       </div>
-//                       <div>
-//                         <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-//                         <input
-//                           type="text"
-//                           value={editedProfile.location}
-//                           onChange={(e) => setEditedProfile({...editedProfile, location: e.target.value})}
-//                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-//                         />
-//                       </div>
-//                     </div>
-//                     <div>
-//                       <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-//                       <textarea
-//                         value={editedProfile.bio}
-//                         onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})}
-//                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-//                         rows="3"
-//                       />
-//                     </div>
-//                     <div>
-//                       <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
-//                       <input
-//                         type="url"
-//                         value={editedProfile.website}
-//                         onChange={(e) => setEditedProfile({...editedProfile, website: e.target.value})}
-//                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-//                       />
-//                     </div>
-//                     <div className="flex space-x-3">
-//                       <button 
-//                         onClick={handleSaveProfile}
-//                         className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-//                       >
-//                         Save Changes
-//                       </button>
-//                       <button 
-//                         onClick={() => setIsEditing(false)}
-//                         className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-400 transition-colors"
-//                       >
-//                         Cancel
-//                       </button>
-//                     </div>
-//                   </div>
-//                 ) : (
-//                   <div className="space-y-4">
-//                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                       <div>
-//                         <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
-//                         <p className="text-gray-900">{editedProfile.name}</p>
-//                       </div>
-//                       <div>
-//                         <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-//                         <p className="text-gray-900">{editedProfile.location}</p>
-//                       </div>
-//                     </div>
-//                     <div>
-//                       <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-//                       <p className="text-gray-900">{editedProfile.bio}</p>
-//                     </div>
-//                     <div>
-//                       <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
-//                       <a href={editedProfile.website} className="text-purple-600 hover:underline">
-//                         {editedProfile.website}
-//                       </a>
-//                     </div>
-//                   </div>
-//                 )}
-//               </div>
-
-//               {/* Notification Settings */}
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Notification Settings</h3>
-//                 <div className="space-y-4">
-//                   <label className="flex items-center">
-//                     <input type="checkbox" defaultChecked className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-//                     <span className="ml-3 text-sm text-gray-700">Email notifications for new messages</span>
-//                   </label>
-//                   <label className="flex items-center">
-//                     <input type="checkbox" defaultChecked className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-//                     <span className="ml-3 text-sm text-gray-700">Push notifications for skill matches</span>
-//                   </label>
-//                   <label className="flex items-center">
-//                     <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-//                     <span className="ml-3 text-sm text-gray-700">Weekly progress reports</span>
-//                   </label>
-//                   <label className="flex items-center">
-//                     <input type="checkbox" defaultChecked className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-//                     <span className="ml-3 text-sm text-gray-700">Session reminders</span>
-//                   </label>
-//                   <label className="flex items-center">
-//                     <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-//                     <span className="ml-3 text-sm text-gray-700">Marketing emails</span>
-//                   </label>
-//                 </div>
-//               </div>
-
-//               {/* Privacy Settings */}
-//               <div>
-//                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Privacy Settings</h3>
-//                 <div className="space-y-4">
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">Profile Visibility</label>
-//                     <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-//                       <option>Public - Anyone can view my profile</option>
-//                       <option>Members Only - Only registered users can view</option>
-//                       <option>Private - Only people I connect with</option>
-//                     </select>
-//                   </div>
-//                   <label className="flex items-center">
-//                     <input type="checkbox" defaultChecked className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-//                     <span className="ml-3 text-sm text-gray-700">Show my online status</span>
-//                   </label>
-//                   <label className="flex items-center">
-//                     <input type="checkbox" defaultChecked className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-//                     <span className="ml-3 text-sm text-gray-700">Allow direct messages from anyone</span>
-//                   </label>
-//                   <label className="flex items-center">
-//                     <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-//                     <span className="ml-3 text-sm text-gray-700">Show my location to other users</span>
-//                   </label>
-//                 </div>
-//               </div>
-
-//               {/* Account Actions */}
-//               <div className="border-t border-gray-200 pt-6">
-//                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Actions</h3>
-//                 <div className="space-y-3">
-//                   <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-//                     Download My Data
-//                   </button>
-//                   <button className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 transition-colors">
-//                     Deactivate Account
-//                   </button>
-//                   <button className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors">
-//                     Delete Account
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default ProfilePage;
-
-
-import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { 
-  Settings, Video, Users, Clock, Star, Award, Plus, 
-  MessageCircle, Calendar
-} from 'lucide-react';
-
-// Mock videos for user profile
 const userVideos = [
   {
     id: 1,
-    title: 'Advanced React Hooks Tutorial',
-    thumbnail: '/api/placeholder/300/200',
+    title: "Advanced React Hooks Tutorial",
+    thumbnail: "/api/placeholder/300/200",
     views: 12500,
     likes: 890,
-    duration: '15:32',
-    uploadDate: '2 weeks ago'
+    duration: "15:32",
+    uploadDate: "2 weeks ago",
   },
   {
     id: 2,
-    title: 'UI/UX Design Principles',
-    thumbnail: '/api/placeholder/300/200',
+    title: "UI/UX Design Principles",
+    thumbnail: "/api/placeholder/300/200",
     views: 8300,
     likes: 654,
-    duration: '22:15',
-    uploadDate: '1 month ago'
+    duration: "22:15",
+    uploadDate: "1 month ago",
   },
   {
     id: 3,
-    title: 'JavaScript Best Practices',
-    thumbnail: '/api/placeholder/300/200',
+    title: "JavaScript Best Practices",
+    thumbnail: "/api/placeholder/300/200",
     views: 15600,
     likes: 1200,
-    duration: '18:45',
-    uploadDate: '3 weeks ago'
+    duration: "18:45",
+    uploadDate: "3 weeks ago",
   },
   {
     id: 4,
-    title: 'Responsive Web Design',
-    thumbnail: '/api/placeholder/300/200',
+    title: "Responsive Web Design",
+    thumbnail: "/api/placeholder/300/200",
     views: 9400,
     likes: 756,
-    duration: '28:30',
-    uploadDate: '1 week ago'
-  }
+    duration: "28:30",
+    uploadDate: "1 week ago",
+  },
 ];
 
-const ProfilePage = () => {
-  const { user } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState('overview');
-  const [isEditing, setIsEditing] = useState(false);
+export default function ProfilePage() {
+  const { user: authUser } = useAuth() || {};
+
+  const fallbackUser = {
+    id: "123",
+    name: "Sarah Johnson",
+    email: "sarah.johnson@example.com",
+    avatar: "/api/placeholder/150/150",
+    level: 15,
+    xp: 12450,
+    badges: [
+      "Early Adopter",
+      "Top Contributor",
+      "Mentor",
+      "Community Helper",
+      "Bug Squasher",
+      "Beta Tester",
+    ],
+    skills: ["React", "JavaScript", "UI/UX Design"],
+    bio: "Passionate full-stack developer and UI/UX enthusiast.",
+    education: {},
+  };
+
+  const user = authUser || fallbackUser;
+
+  const [activeTab, setActiveTab] = useState("overview");
+  const [newSkill, setNewSkill] = useState("");
   const [editedProfile, setEditedProfile] = useState({
-    name: user?.name || '',
-    bio: 'Passionate full-stack developer and UI/UX enthusiast. Love sharing knowledge and learning new technologies.',
-    location: 'San Francisco, CA',
-    website: 'https://sarahjohnson.dev',
-    skills: [...(user?.skillsOffered || []), ...(user?.skillsLearning || [])],
-    socialLinks: {
-      twitter: '@sarahdev',
-      linkedin: 'linkedin.com/in/sarahj',
-      github: 'github.com/sarahj'
-    }
+    name: "",
+    bio: "",
+    avatar: "",
+    skills: [],
+    skillsToLearn: [],
+    education: {},
+    resumeName: "",
   });
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: Users },
-    { id: 'videos', label: 'My Videos', icon: Video },
-    { id: 'achievements', label: 'Achievements', icon: Award },
-    { id: 'settings', label: 'Settings', icon: Settings }
-  ];
+  //  Initialize profile state from user
+  const resetProfileState = useCallback(() => {
+    if (user) {
+      setEditedProfile({
+        name: user.name || "",
+        bio: user.bio || "",
+        avatar: user.avatar || "",
+        skills: user.skills || [],
+        skillsToLearn: user.skillsToLearn || [],
+        education: user.education || {},
+        resumeName: user.resumeName || "",
+      });
+    }
+  }, [user]);
 
+  useEffect(() => {
+    resetProfileState();
+  }, [resetProfileState]);
+
+  const [newLearningSkill, setNewLearningSkill] = useState("");
+
+  const handleAddLearningSkill = () => {
+    if (
+      newLearningSkill.trim() &&
+      !editedProfile.skillsToLearn.includes(newLearningSkill.trim())
+    ) {
+      setEditedProfile((prev) => ({
+        ...prev,
+        skillsToLearn: [...prev.skillsToLearn, newLearningSkill.trim()],
+      }));
+      setNewLearningSkill("");
+    }
+  };
+
+  const handleRemoveLearningSkill = (skillToRemove) => {
+    setEditedProfile((prev) => ({
+      ...prev,
+      skillsToLearn: prev.skillsToLearn.filter(
+        (skill) => skill !== skillToRemove
+      ),
+    }));
+  };
+
+  // Save / Cancel handlers
   const handleSaveProfile = () => {
-    console.log('Saving profile:', editedProfile);
-    setIsEditing(false);
+    console.log("Saving profile data:", editedProfile);
+    setActiveTab("overview");
+  };
+
+  const handleCancelEdit = () => {
+    resetProfileState();
+    setActiveTab("overview");
+  };
+
+  // Input handlers
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setEditedProfile((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditedProfile((prev) => ({ ...prev, avatar: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleResumeUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditedProfile((prev) => ({ ...prev, resumeName: file.name }));
+      console.log("Resume file selected:", file);
+    }
+  };
+
+  const handleAddSkill = () => {
+    if (newSkill.trim() && !editedProfile.skills.includes(newSkill.trim())) {
+      setEditedProfile((prev) => ({
+        ...prev,
+        skills: [...prev.skills, newSkill.trim()],
+      }));
+      setNewSkill("");
+    }
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setEditedProfile((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((skill) => skill !== skillToRemove),
+    }));
+  };
+
+  const handleEducationChange = (level, field, value) => {
+    setEditedProfile((prev) => ({
+      ...prev,
+      education: {
+        ...prev.education,
+        [level]: {
+          ...(prev.education?.[level] || {}),
+          [field]: value,
+        },
+      },
+    }));
   };
 
   const recentActivities = [
     {
-      type: 'video',
       action: 'Published "Advanced React Patterns" video',
-      timestamp: '2 days ago',
-      icon: Video
+      timestamp: "2 days ago",
+      icon: Video,
     },
     {
-      type: 'session',
-      action: 'Completed mentoring session with John Doe',
-      timestamp: '5 days ago',
-      icon: Users
+      action: "Completed mentoring session with John Doe",
+      timestamp: "5 days ago",
+      icon: Users,
     },
     {
-      type: 'community',
-      action: 'Answered 3 questions in Programming forum',
-      timestamp: '1 week ago',
-      icon: MessageCircle
+      action: "Answered 3 questions in Programming forum",
+      timestamp: "1 week ago",
+      icon: MessageCircle,
     },
     {
-      type: 'achievement',
       action: 'Earned "Community Leader" badge',
-      timestamp: '2 weeks ago',
-      icon: Award
-    }
+      timestamp: "2 weeks ago",
+      icon: Award,
+    },
+  ];
+
+  const tabs = [
+    { id: "overview", label: "Overview", icon: Users },
+    { id: "profile", label: "Edit Profile", icon: Settings },
+    { id: "videos", label: "My Videos", icon: Video },
+    { id: "achievements", label: "Achievements", icon: Award },
   ];
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <p className="text-slate-400 text-lg">Loading profile...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Profile Header */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 h-32"></div>
-        <div className="relative px-6 pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="h-24 w-24 rounded-full border-4 border-white -mt-12 bg-white"
-            />
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-800">{editedProfile.name}</h1>
-              <p className="text-gray-600">Level {user.level} • {user.xp?.toLocaleString()} XP</p>
-              <p className="text-gray-600 mt-1">{editedProfile.location}</p>
-              {editedProfile.bio && (
-                <p className="text-gray-700 mt-2 max-w-2xl">{editedProfile.bio}</p>
-              )}
-              <div className="flex flex-wrap gap-2 mt-3">
-                {(user.badges || []).slice(0, 3).map((badge, index) => (
-                  <span key={index} className="bg-purple-100 text-purple-800 text-sm px-2 py-1 rounded-full">
-                    {badge}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="flex space-x-3">
-              <button 
-                onClick={() => setIsEditing(true)}
-                className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-              >
-                Edit Profile
-              </button>
-              <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                <Settings className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          <Video className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-gray-800">23</div>
-          <div className="text-sm text-gray-600">Videos Created</div>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-gray-800">156</div>
-          <div className="text-sm text-gray-600">Students Taught</div>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          <Clock className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-gray-800">42h</div>
-          <div className="text-sm text-gray-600">Teaching Hours</div>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-gray-800">4.9</div>
-          <div className="text-sm text-gray-600">Average Rating</div>
-        </div>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="bg-white rounded-xl shadow-md mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
-            {tabs.map((tab) => {
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-purple-500 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <IconComponent className="h-4 w-4" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="p-6">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div className="grid lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Skills I Offer</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {(user.skillsOffered || []).map((skill, index) => (
-                      <span key={index} className="bg-green-100 text-green-800 px-3 py-2 rounded-full text-sm font-medium">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Skills I'm Learning</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {(user.skillsLearning || []).map((skill, index) => (
-                      <span key={index} className="bg-blue-100 text-blue-800 px-3 py-2 rounded-full text-sm font-medium">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
-                  <div className="space-y-3">
-                    {recentActivities.map((activity, index) => {
-                      const IconComponent = activity.icon;
-                      return (
-                        <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="bg-white p-2 rounded-lg">
-                            <IconComponent className="h-4 w-4 text-purple-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-800">{activity.action}</p>
-                            <p className="text-xs text-gray-500">{activity.timestamp}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-800 mb-3">Quick Actions</h3>
-                  <div className="space-y-2">
-                    <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center space-x-2">
-                      <Plus className="h-4 w-4" />
-                      <span>Upload Video</span>
-                    </button>
-                    <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>Schedule Session</span>
-                    </button>
-                    <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2">
-                      <MessageCircle className="h-4 w-4" />
-                      <span>Message Students</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Videos Tab */}
-          {activeTab === 'videos' && (
-            <div>
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">My Videos ({userVideos.length})</h3>
-                <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center space-x-2">
-                  <Plus className="h-4 w-4" />
-                  <span>Upload New Video</span>
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userVideos.map((video) => (
-                  <div key={video.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                    <div className="relative">
-                      <img
-                        src={video.thumbnail}
-                        alt={video.title}
-                        className="w-full h-36 object-cover"
-                      />
-                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 rounded">
-                        {video.duration}
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h4 className="font-medium text-gray-800 mb-2 line-clamp-2">{video.title}</h4>
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-                        <span>{video.views.toLocaleString()} views</span>
-                        <span>{video.likes} likes</span>
-                      </div>
-                      <p className="text-xs text-gray-500">Uploaded {video.uploadDate}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Achievements Tab */}
-          {activeTab === 'achievements' && (
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-6">Achievements & Badges</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {(user.badges || []).map((badge, index) => (
-                  <div key={index} className="bg-gradient-to-br from-yellow-100 to-orange-100 p-6 rounded-xl border border-yellow-200">
-                    <div className="text-center">
-                      <Award className="h-12 w-12 text-yellow-600 mx-auto mb-3" />
-                      <h4 className="font-semibold text-gray-800 mb-2">{badge}</h4>
-                      <p className="text-sm text-gray-600">Earned by completing specific milestones</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Settings Tab */}
-          {activeTab === 'settings' && (
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Profile Settings</h3>
-                {isEditing ? (
-                  <div className="bg-blue-50 p-6 rounded-lg space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
-                        <input
-                          type="text"
-                          value={editedProfile.name}
-                          onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                        <input
-                          type="text"
-                          value={editedProfile.location}
-                          onChange={(e) => setEditedProfile({...editedProfile, location: e.target.value})}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                      <textarea
-                        value={editedProfile.bio}
-                        onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        rows="3"
-                      />
-                    </div>
-                    <div className="flex space-x-3">
-                      <button 
-                        onClick={handleSaveProfile}
-                        className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
-                      >
-                        Save Changes
-                      </button>
-                      <button 
-                        onClick={() => setIsEditing(false)}
-                        className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-400 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
-                        <p className="text-gray-900">{editedProfile.name}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                        <p className="text-gray-900">{editedProfile.location}</p>
-                      </div>
-                    </div>
-                  </div>
+    <div className="min-h-screen bg-slate-900 text-slate-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Profile Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden mb-8"
+        >
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 h-20"></div>
+          <div className="relative px-6 py-4">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="relative group">
+                <img
+                  src={editedProfile.avatar}
+                  // alt={editedProfile.name}
+                  className="h-28 w-28 rounded-full border-4 border-slate-800 -mt-16 bg-slate-700 object-cover"
+                />
+                {activeTab === "profile" && (
+                  <label className="absolute inset-0 -mt-16 flex items-center justify-center bg-black bg-opacity-60 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Upload className="h-8 w-8 text-white" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </div>
+
+              <div className="flex-1 text-center sm:text-left">
+                <h1 className="text-4xl font-bold text-white">
+                  {editedProfile.name}
+                </h1>
+                <p className="text-slate-400">
+                  Level {user.level} • {user.xp?.toLocaleString()} XP
+                </p>
+                <p className="text-slate-300 mt-2 max-w-2xl">
+                  {editedProfile.bio}
+                </p>
+              </div>
+
+              <div className="flex space-x-3 self-center sm:self-end">
+                <button
+                  onClick={() => {
+                    setActiveTab("profile");
+                    setTimeout(() => {
+                      const section = document.getElementById(
+                        "edit-profile-section"
+                      );
+                      if (section) {
+                        section.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }, 200);
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center gap-2"
+                >
+                  <Settings size={16} />
+                  Edit Profile
+                </button>
+              </div>
             </div>
-          )}
+          </div>
+        </motion.div>
+
+        {/* Tabs Section */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl">
+          <div className="border-b border-slate-700">
+            <nav className="flex space-x-2 sm:space-x-8 px-6 overflow-x-auto">
+              {tabs.map((tab) => {
+                const IconComponent = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-300 whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? "border-purple-500 text-purple-400"
+                        : "border-transparent text-slate-400 hover:text-purple-400 hover:border-purple-400/50"
+                    }`}
+                  >
+                    <IconComponent className="h-5 w-5" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="p-6">
+            <AnimatePresence mode="wait">
+              {/* Overview */}
+              {activeTab === "overview" && (
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="grid lg:grid-cols-3 gap-8"
+                >
+                  <div className="lg:col-span-2 space-y-8">
+                    {/* My Skills */}
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-100 mb-6">
+                        My Skills
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {editedProfile.skills.map((skill, idx) => (
+                          <motion.span
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-purple-500/20 text-purple-300 px-3 py-2 rounded-full text-sm font-medium"
+                          >
+                            {skill}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Skills I Want to Learn */}
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-100 mb-6">
+                        Skills I Want to Learn
+                      </h3>
+                      <div className="flex flex-wrap gap-3">
+                        {editedProfile.skillsToLearn.map((skill, idx) => (
+                          <motion.span
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-indigo-500/20 text-indigo-300 px-3 py-2 rounded-full text-sm font-medium"
+                          >
+                            {skill}
+                          </motion.span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Education Details */}
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-100 mb-6">
+                        Education Details
+                      </h3>
+                      <div className="space-y-4">
+                        {/* 10th Standard */}
+                        {editedProfile.education?.tenth && (
+                          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                            <h4 className="text-lg font-semibold text-purple-400 mb-3">
+                              10th Standard
+                            </h4>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              {editedProfile.education.tenth.school && (
+                                <div>
+                                  <span className="text-slate-400">
+                                    School:
+                                  </span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.tenth.school}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.tenth.board && (
+                                <div>
+                                  <span className="text-slate-400">Board:</span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.tenth.board}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.tenth.percentage && (
+                                <div>
+                                  <span className="text-slate-400">
+                                    Percentage:
+                                  </span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.tenth.percentage}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.tenth.year && (
+                                <div>
+                                  <span className="text-slate-400">Year:</span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.tenth.year}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 12th Standard */}
+                        {editedProfile.education?.twelfth && (
+                          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                            <h4 className="text-lg font-semibold text-purple-400 mb-3">
+                              12th Standard
+                            </h4>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              {editedProfile.education.twelfth.school && (
+                                <div>
+                                  <span className="text-slate-400">
+                                    School:
+                                  </span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.twelfth.school}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.twelfth.board && (
+                                <div>
+                                  <span className="text-slate-400">Board:</span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.twelfth.board}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.twelfth.percentage && (
+                                <div>
+                                  <span className="text-slate-400">
+                                    Percentage:
+                                  </span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.twelfth.percentage}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.twelfth.year && (
+                                <div>
+                                  <span className="text-slate-400">Year:</span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.twelfth.year}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Graduation */}
+                        {editedProfile.education?.graduation && (
+                          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                            <h4 className="text-lg font-semibold text-purple-400 mb-3">
+                              Graduation
+                            </h4>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              {editedProfile.education.graduation.college && (
+                                <div>
+                                  <span className="text-slate-400">
+                                    College:
+                                  </span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.graduation.college}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.graduation.degree && (
+                                <div>
+                                  <span className="text-slate-400">
+                                    Degree:
+                                  </span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.graduation.degree}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.graduation
+                                .specialization && (
+                                <div>
+                                  <span className="text-slate-400">
+                                    Specialization:
+                                  </span>
+                                  <p className="text-slate-200">
+                                    {
+                                      editedProfile.education.graduation
+                                        .specialization
+                                    }
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.graduation.cgpa && (
+                                <div>
+                                  <span className="text-slate-400">CGPA:</span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.graduation.cgpa}
+                                  </p>
+                                </div>
+                              )}
+                              {editedProfile.education.graduation.year && (
+                                <div className="col-span-2">
+                                  <span className="text-slate-400">Year:</span>
+                                  <p className="text-slate-200">
+                                    {editedProfile.education.graduation.year}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Post Graduation */}
+                        {editedProfile.education?.postGraduation &&
+                          (editedProfile.education.postGraduation.college ||
+                            editedProfile.education.postGraduation.degree) && (
+                            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                              <h4 className="text-lg font-semibold text-purple-400 mb-3">
+                                Post Graduation
+                              </h4>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                {editedProfile.education.postGraduation
+                                  .college && (
+                                  <div>
+                                    <span className="text-slate-400">
+                                      College:
+                                    </span>
+                                    <p className="text-slate-200">
+                                      {
+                                        editedProfile.education.postGraduation
+                                          .college
+                                      }
+                                    </p>
+                                  </div>
+                                )}
+                                {editedProfile.education.postGraduation
+                                  .degree && (
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Degree:
+                                    </span>
+                                    <p className="text-slate-200">
+                                      {
+                                        editedProfile.education.postGraduation
+                                          .degree
+                                      }
+                                    </p>
+                                  </div>
+                                )}
+                                {editedProfile.education.postGraduation
+                                  .specialization && (
+                                  <div>
+                                    <span className="text-slate-400">
+                                      Specialization:
+                                    </span>
+                                    <p className="text-slate-200">
+                                      {
+                                        editedProfile.education.postGraduation
+                                          .specialization
+                                      }
+                                    </p>
+                                  </div>
+                                )}
+                                {editedProfile.education.postGraduation
+                                  .cgpa && (
+                                  <div>
+                                    <span className="text-slate-400">
+                                      CGPA:
+                                    </span>
+                                    <p className="text-slate-200">
+                                      {
+                                        editedProfile.education.postGraduation
+                                          .cgpa
+                                      }
+                                    </p>
+                                  </div>
+                                )}
+                                {editedProfile.education.postGraduation
+                                  .year && (
+                                  <div className="col-span-2">
+                                    <span className="text-slate-400">
+                                      Year:
+                                    </span>
+                                    <p className="text-slate-200">
+                                      {
+                                        editedProfile.education.postGraduation
+                                          .year
+                                      }
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Activity - Right Column */}
+                  <div className="lg:col-span-1">
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-100 mb-6">
+                        Recent Activity
+                      </h3>
+                      <div className="space-y-3">
+                        {recentActivities.map((activity, idx) => {
+                          const IconComponent = activity.icon;
+                          return (
+                            <motion.div
+                              key={idx}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: idx * 0.1 }}
+                              className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                            >
+                              <div className="bg-slate-700 p-2 rounded-full">
+                                <IconComponent className="h-5 w-5 text-purple-400" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium text-slate-200 text-sm">
+                                  {activity.action}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                  {activity.timestamp}
+                                </p>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Edit Profile Section */}
+              {activeTab === "profile" && (
+                <EditProfile
+                  editedProfile={editedProfile}
+                  onProfileChange={handleProfileChange}
+                  onPhotoUpload={handlePhotoUpload}
+                  onSave={handleSaveProfile}
+                  onCancel={handleCancelEdit}
+                  newSkill={newSkill}
+                  setNewSkill={setNewSkill}
+                  onAddSkill={handleAddSkill}
+                  onRemoveSkill={handleRemoveSkill}
+                  onEducationChange={handleEducationChange}
+                  onResumeUpload={handleResumeUpload}
+                  newLearningSkill={newLearningSkill}
+                  setNewLearningSkill={setNewLearningSkill}
+                  onAddLearningSkill={handleAddLearningSkill}
+                  onRemoveLearningSkill={handleRemoveLearningSkill}
+                />
+              )}
+
+              {/* Videos */}
+              {activeTab === "videos" && (
+                <motion.div
+                  key="videos"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h3 className="text-2xl font-bold text-slate-100">
+                      My Videos ({userVideos.length})
+                    </h3>
+                    <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-300 flex items-center space-x-2">
+                      <Plus className="h-4 w-4" />
+                      <span>Upload New Video</span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {userVideos.map((video) => (
+                      <div
+                        key={video.id}
+                        className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/5 transition-all cursor-pointer"
+                      >
+                        <div className="relative">
+                          <img
+                            src={video.thumbnail}
+                            alt={video.title}
+                            className="w-full h-40 object-cover"
+                          />
+                          <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-1.5 py-0.5 rounded">
+                            {video.duration}
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <h4 className="font-semibold text-slate-100 mb-2 line-clamp-2 h-12">
+                            {video.title}
+                          </h4>
+                          <div className="flex items-center justify-between text-sm text-slate-400 mb-2">
+                            <span>{video.views.toLocaleString()} views</span>
+                            <span>{video.likes} likes</span>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            Uploaded {video.uploadDate}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Achievements */}
+              {activeTab === "achievements" && (
+                <motion.div
+                  key="achievements"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <h3 className="text-2xl font-bold text-slate-100 mb-6">
+                    Achievements & Badges
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {user.badges.map((badge, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="flex flex-col items-center text-center p-4 bg-slate-800 rounded-lg hover:bg-slate-700/50 border border-slate-700 hover:border-purple-500/50 transition-all"
+                      >
+                        <div className="p-3 bg-slate-700 rounded-full mb-3">
+                          <Award className="h-8 w-8 text-purple-400" />
+                        </div>
+                        <h4 className="font-semibold text-slate-200 text-sm">
+                          {badge}
+                        </h4>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default ProfilePage;
+}

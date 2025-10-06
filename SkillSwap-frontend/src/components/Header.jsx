@@ -262,7 +262,7 @@ const Header = () => {
         { id: '/videos', label: 'Videos', icon: Video },
         { id: '/skill-exchange', label: 'Skill Exchange', icon: Users },
         { id: '/community', label: 'Community', icon: MessageCircle },
-        { id: '/leaderboard', label: 'Leaderboard', icon: Trophy }
+        // { id: '/leaderboard', label: 'Leaderboard', icon: Trophy }
     ];
 
     const isActivePath = (path) => {

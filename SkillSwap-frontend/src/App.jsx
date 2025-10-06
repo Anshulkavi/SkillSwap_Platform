@@ -12,6 +12,7 @@ import SkillExchangePage from './pages/SkillExchangePage';
 import CommunityPage from './pages/CommunityPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './components/Settings';
 
 const App = () => {
   return (
@@ -50,9 +51,11 @@ const LayoutWrapper = () => {
         <Route path="/videos" element={<VideosPage />} />
         <Route path="/skill-exchange" element={<SkillExchangePage />} />
         <Route path="/community" element={<CommunityPage />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        
+        {/* <Route path="/leaderboard" element={<LeaderboardPage />} /> */}
+        <Route path="/profile" element={<ProfilePage />} /> 
+        <Route path="/settings" element={<SettingsPage />} />
+
+
         {/* Catch all route - redirect to home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

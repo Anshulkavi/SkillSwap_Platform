@@ -2,19 +2,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+from config.cloudinary_config import configure_cloudinary
 
+load_dotenv()
+
+# Import your application modules
 from models.database import engine, Base
 from routers import (
     login, signup, profile, skill_exchange, 
     community, leaderboard, videos, chat, video_call
 )
 
+# 👇 CORRECTED: Only one lifespan function
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Create database tables
+    # Code that runs on startup
+    print("Application startup...")
+    configure_cloudinary()
     Base.metadata.create_all(bind=engine)
     yield
-    # Shutdown: cleanup if needed
+    # Code that runs on shutdown
+    print("Application shutdown...")
 
 app = FastAPI(
     title="SkillSwap API",
@@ -32,7 +41,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers with prefixes matching frontend expectations
+# Include routers
 app.include_router(login.router, prefix="/api", tags=["Authentication"])
 app.include_router(signup.router, prefix="/api", tags=["Authentication"])
 app.include_router(profile.router, prefix="/api/profile", tags=["Profile"])

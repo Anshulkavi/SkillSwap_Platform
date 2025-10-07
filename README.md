@@ -225,45 +225,83 @@ The application uses SQLModel for type-safe database operations with the followi
 - **Relationship Management** - Foreign keys and joins
 - **Status Tracking** - Enum-based request statuses (pending, accepted, rejected, completed)
 
-## 📚 API Documentation
-```
-POST /api/auth/signup        - User registration
-POST /api/auth/login         - User login (returns JWT token)
-GET  /api/auth/me           - Get current user profile
-POST /api/auth/logout       - User logout
-```
+## 🔌 API Endpoints
 
-### Listings Endpoints
-```
-GET    /api/listings/               - Get all listings (with search params)
-POST   /api/listings/               - Create new listing
-GET    /api/listings/{listing_id}   - Get specific listing
-PUT    /api/listings/{listing_id}   - Update listing
-DELETE /api/listings/{listing_id}   - Delete listing
-```
+---
 
-### Exchange Requests
-```
-POST /api/requests/                 - Send swap request
-GET  /api/requests/                 - Get user's requests
-PUT  /api/requests/{request_id}     - Update request status
-DELETE /api/requests/{request_id}   - Cancel request
-```
+### 🧩 **Authentication**
+| Method | Endpoint | Description |
+|:-------:|:------------------------------------------|:------------------------------------------|
+| **POST** | `/api/signup` | Register a new user |
+| **POST** | `/api/login` | Login and get JWT tokens |
+| **POST** | `/api/login/refresh` | Refresh access token |
+| **POST** | `/api/logout` | Logout current user |
 
-### Chat & Communication
-```
-GET    /api/chat/messages/{user_id} - Get chat messages
-POST   /api/chat/messages/          - Send message
-WS     /ws/chat/{user_id}           - WebSocket chat connection
-WS     /ws/video/{room_id}          - WebSocket video signaling
-```
+---
 
-### Reviews & Ratings
-```
-POST /api/reviews/              - Create review
-GET  /api/reviews/user/{id}     - Get user reviews
-PUT  /api/reviews/{review_id}   - Update review
-```
+### 👤 **Profile**
+| Method | Endpoint | Description |
+|:-------:|:------------------------------------------|:------------------------------------------|
+| **GET** | `/api/profile/me` | Get current user profile |
+| **PUT** | `/api/profile/me` | Update current user profile |
+| **GET** | `/api/profile/{user_id}` | Get profile by ID |
+
+---
+
+### 🔄 **Skill Exchange**
+| Method | Endpoint | Description |
+|:-------:|:------------------------------------------|:------------------------------------------|
+| **GET** | `/api/skill-exchange/listings` | Get all skill listings |
+| **POST** | `/api/skill-exchange/listings` | Create new listing |
+| **PUT** | `/api/skill-exchange/listings/{id}` | Update listing |
+| **DELETE** | `/api/skill-exchange/listings/{id}` | Delete listing |
+| **POST** | `/api/skill-exchange/requests` | Create skill swap request |
+| **GET** | `/api/skill-exchange/requests/sent` | Get sent requests |
+| **GET** | `/api/skill-exchange/requests/received` | Get received requests |
+
+---
+
+### 🎥 **Videos**
+| Method | Endpoint | Description |
+|:-------:|:------------------------------------------|:------------------------------------------|
+| **GET** | `/api/videos` | Get all videos |
+| **POST** | `/api/videos` | Upload new video |
+| **GET** | `/api/videos/{id}` | Get specific video |
+| **PUT** | `/api/videos/{id}` | Update video |
+| **DELETE** | `/api/videos/{id}` | Delete video |
+| **POST** | `/api/videos/{id}/like` | Like a video |
+
+---
+
+### 💬 **Community**
+| Method | Endpoint | Description |
+|:-------:|:------------------------------------------|:------------------------------------------|
+| **GET** | `/api/community/posts` | Get all posts |
+| **POST** | `/api/community/posts` | Create a new post |
+| **POST** | `/api/community/posts/{id}/like` | Like a post |
+| **POST** | `/api/community/posts/{id}/comments` | Add a comment to a post |
+
+---
+
+### 🏆 **Leaderboard**
+| Method | Endpoint | Description |
+|:-------:|:------------------------------------------|:------------------------------------------|
+| **GET** | `/api/leaderboard` | Get leaderboard rankings |
+| **GET** | `/api/leaderboard/my-rank` | Get current user's rank |
+| **GET** | `/api/leaderboard/achievements` | Get user achievements |
+
+---
+
+### ⚡ **WebSocket (Real-Time)**
+| Protocol | Endpoint | Description |
+|:----------:|:------------------------------------------|:------------------------------------------|
+| **WS** | `/api/chat/ws/{room_id}` | Real-time chat connection |
+| **WS** | `/api/video-call/ws/{room_id}` | Video call signaling channel |
+
+---
+
+💡 *All API endpoints are protected with JWT-based authentication unless specified otherwise.*
+
 
 ### Interactive API Documentation
 FastAPI automatically generates interactive API documentation:

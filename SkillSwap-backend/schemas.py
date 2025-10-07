@@ -1,3 +1,4 @@
+# schemas.py
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict
 from datetime import datetime
@@ -78,6 +79,7 @@ class ListingResponse(ListingBase):
     is_active: bool
     created_at: datetime
     user: UserResponse
+    is_liked: bool = False # 👇 NEW: Add this field
     
     class Config:
         from_attributes = True
@@ -174,7 +176,8 @@ class VideoResponse(VideoBase):
     likes: int
     status: str
     created_at: datetime
-    
+    user: UserResponse # 👇 NEW: Add this field
+
     class Config:
         from_attributes = True
 

@@ -18,7 +18,6 @@ async def signup(
     db: Session = Depends(get_db)
 ):
     """User registration endpoint"""
-    # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
@@ -26,31 +25,24 @@ async def signup(
             detail="Email already registered"
         )
     
-    # Create new user
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         name=user_data.name,
         email=user_data.email,
-        password=hashed_password,
-        level=1,
-        xp=0,
-        badges=["New Member"],
-        skills_offered=[],
-        skills_learning=[],
-        social_links={},
-        avatar="/api/placeholder/40/40"
+        password=hashed_password
+        # You can set other default values here if needed
     )
     
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     
-    # Create tokens
+    # 👇 THE FIX: Convert new_user.id to a string before creating the token
     access_token = create_access_token(
-        data={"sub": new_user.id, "email": new_user.email}
+        data={"sub": str(new_user.id), "email": new_user.email}
     )
     refresh_token = create_refresh_token(
-        data={"sub": new_user.id, "email": new_user.email}
+        data={"sub": str(new_user.id), "email": new_user.email}
     )
     
     return {

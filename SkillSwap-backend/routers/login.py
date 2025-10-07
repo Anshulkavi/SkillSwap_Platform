@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from models.database import get_db
-from schemas import UserLogin, Token, UserResponse
+from schemas import UserLogin, Token
 from auth.dependencies import (
     authenticate_user,
     create_access_token,
@@ -27,12 +27,12 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Create tokens
+    # 👇 THE FIX: Convert user.id to a string before creating the token
     access_token = create_access_token(
-        data={"sub": user.id, "email": user.email}
+        data={"sub": str(user.id), "email": user.email}
     )
     refresh_token = create_refresh_token(
-        data={"sub": user.id, "email": user.email}
+        data={"sub": str(user.id), "email": user.email}
     )
     
     return {
@@ -48,11 +48,12 @@ async def refresh_token(
     db: Session = Depends(get_db)
 ):
     """Refresh access token using refresh token"""
+    # 👇 Also fixed here for consistency
     access_token = create_access_token(
-        data={"sub": current_user.id, "email": current_user.email}
+        data={"sub": str(current_user.id), "email": current_user.email}
     )
     refresh_token = create_refresh_token(
-        data={"sub": current_user.id, "email": current_user.email}
+        data={"sub": str(current_user.id), "email": current_user.email}
     )
     
     return {

@@ -1,4 +1,7 @@
+// src/context/AuthContext.jsx
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import api from '../api/axios'; // Import our pre-configured axios instance
 
 const AuthContext = createContext(null);
 
@@ -10,91 +13,102 @@ export const useAuth = () => {
   return context;
 };
 
+// Helper to set the authorization header on the axios instance
+const setAuthHeader = (token) => {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+  }
+};
+
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for existing session on mount
+  // Check for existing session on initial app load
   useEffect(() => {
-    const storedUser = sessionStorage.getItem('skillswap_user');
-    if (storedUser) {
+    const token = localStorage.getItem('skillswap_access_token');
+    const storedUser = localStorage.getItem('skillswap_user');
+
+    if (token && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
+        setAuthHeader(token); // Set auth header for any subsequent API calls
       } catch (error) {
         console.error('Failed to parse stored user:', error);
+        localStorage.removeItem('skillswap_access_token');
+        localStorage.removeItem('skillswap_user');
       }
     }
     setLoading(false);
   }, []);
 
   const login = async (email, password) => {
-    // Simulate API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Mock validation
-        if (email && password) {
-          const mockUser = {
-            id: Math.random(),
-            name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-            email: email,
-            avatar: '/api/placeholder/40/40',
-            level: 1,
-            xp: 0,
-            xpToNext: 100,
-            badges: [],
-            skillsOffered: [],
-            skillsLearning: [],
-            createdAt: new Date().toISOString()
-          };
-          
-          setUser(mockUser);
-          sessionStorage.setItem('skillswap_user', JSON.stringify(mockUser));
-          resolve(mockUser);
-        } else {
-          reject(new Error('Invalid credentials'));
-        }
-      }, 1000);
-    });
+    try {
+      const response = await api.post('/api/login', {
+        email,
+        password,
+      });
+
+      const { access_token, refresh_token, user: userData } = response.data;
+      
+      setUser(userData);
+      localStorage.setItem('skillswap_access_token', access_token);
+      localStorage.setItem('skillswap_refresh_token', refresh_token);
+      localStorage.setItem('skillswap_user', JSON.stringify(userData));
+      setAuthHeader(access_token);
+      
+      return userData;
+
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || err.message || 'An unknown error occurred';
+      throw new Error(errorMessage);
+    }
   };
 
+  // 👇 THIS IS THE NEWLY IMPLEMENTED FUNCTION
   const signup = async (name, email, password) => {
-    // Simulate API call
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (name && email && password) {
-          const newUser = {
-            id: Math.random(),
-            name: name,
-            email: email,
-            avatar: '/api/placeholder/40/40',
-            level: 1,
-            xp: 0,
-            xpToNext: 100,
-            badges: ['New Member'],
-            skillsOffered: [],
-            skillsLearning: [],
-            createdAt: new Date().toISOString()
-          };
-          
-          setUser(newUser);
-          sessionStorage.setItem('skillswap_user', JSON.stringify(newUser));
-          resolve(newUser);
-        } else {
-          reject(new Error('All fields are required'));
-        }
-      }, 1000);
-    });
+    try {
+      // Call the backend signup endpoint
+      const response = await api.post('/api/signup', {
+        name,
+        email,
+        password,
+      });
+
+      // The backend returns the same Token object as login, so we handle it the same way
+      const { access_token, refresh_token, user: userData } = response.data;
+      
+      setUser(userData);
+      localStorage.setItem('skillswap_access_token', access_token);
+      localStorage.setItem('skillswap_refresh_token', refresh_token);
+      localStorage.setItem('skillswap_user', JSON.stringify(userData));
+      setAuthHeader(access_token);
+      
+      return userData;
+
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || err.message || 'An unknown error occurred';
+      throw new Error(errorMessage);
+    }
   };
 
   const logout = () => {
     setUser(null);
-    sessionStorage.removeItem('skillswap_user');
+    localStorage.removeItem('skillswap_access_token');
+    localStorage.removeItem('skillswap_refresh_token');
+    localStorage.removeItem('skillswap_user');
+    setAuthHeader(null);
   };
 
   const updateUser = (updates) => {
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    sessionStorage.setItem('skillswap_user', JSON.stringify(updatedUser));
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem('skillswap_user', JSON.stringify(updatedUser));
+    }
   };
 
   const value = {
@@ -109,9 +123,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
-
-export default AuthContext;

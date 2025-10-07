@@ -236,15 +236,6 @@ const CommunityPage = () => {
     },
   });
 
-  const [notifications, setNotifications] = useState({
-    emailMessages: true,
-    pushSkillMatches: true,
-    weeklyReports: false,
-    sessionReminders: true,
-    marketingEmails: false,
-    communityUpdates: true,
-  });
-
   const [privacy, setPrivacy] = useState({
     profileVisibility: "public",
     showOnlineStatus: true,
@@ -260,16 +251,12 @@ const tabs = [
   { id: "achievements", label: "Achievements", icon: Award },
   { id: "analytics", label: "Analytics", icon: TrendingUp },
   { id: "leaderboard", label: "Leaderboard", icon: Star },
-  // { id: "settings", label: "Settings", icon: Settings },
+  
 ];
 
   const handleSaveProfile = () => {
     console.log("Saving profile:", editedProfile);
     setIsEditing(false);
-  };
-
-  const handleNotificationChange = (key) => {
-    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handlePrivacyChange = (key, value) => {
@@ -328,197 +315,6 @@ const tabs = [
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Profile Header */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-        <div className="relative">
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 h-32"></div>
-          {isEditing && (
-            <button className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition-colors">
-              <Camera className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        <div className="relative px-6 pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end space-y-4 sm:space-y-0 sm:space-x-6">
-            <div className="relative">
-              <img
-                src={user?.avatar || "/default-avatar.png"}
-                alt={user?.name || "User Avatar"}
-                className="h-24 w-24 rounded-full border-4 border-white -mt-12 bg-white"
-              />
-
-              {isEditing && (
-                <button className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full hover:bg-purple-700 transition-colors">
-                  <Camera className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex-1 min-w-0">
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedProfile.name}
-                  onChange={(e) =>
-                    setEditedProfile({ ...editedProfile, name: e.target.value })
-                  }
-                  className="text-2xl font-bold text-gray-800 bg-transparent border-b-2 border-purple-300 focus:border-purple-600 outline-none mb-1"
-                />
-              ) : (
-                <h1 className="text-2xl font-bold text-gray-800">
-                  {editedProfile.name}
-                </h1>
-              )}
-
-              <div className="flex items-center space-x-4 text-gray-600 mb-2">
-                <span>Level {user?.level ?? 0}</span>
-                <span>•</span>
-                <span>{user?.xp?.toLocaleString?.() ?? "0"} XP</span>
-                <span>•</span>
-                <span className="flex items-center space-x-1">
-                  <MapPin className="h-4 w-4" />
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedProfile.location}
-                      onChange={(e) =>
-                        setEditedProfile({
-                          ...editedProfile,
-                          location: e.target.value,
-                        })
-                      }
-                      className="bg-transparent border-b border-gray-300 focus:border-purple-600 outline-none"
-                    />
-                  ) : (
-                    <span>{editedProfile.location}</span>
-                  )}
-                </span>
-              </div>
-
-              {isEditing ? (
-                <textarea
-                  value={editedProfile.bio}
-                  onChange={(e) =>
-                    setEditedProfile({ ...editedProfile, bio: e.target.value })
-                  }
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                  rows="2"
-                />
-              ) : (
-                <p className="text-gray-700 max-w-2xl">{editedProfile.bio}</p>
-              )}
-
-              <div className="flex items-center space-x-4 mt-3">
-                {editedProfile.website && (
-                  <a
-                    href={editedProfile.website}
-                    className="text-purple-600 hover:underline flex items-center space-x-1"
-                  >
-                    <Globe className="h-4 w-4" />
-                    <span>Website</span>
-                  </a>
-                )}
-                <div className="flex space-x-2">
-                  {Object.entries(editedProfile.socialLinks).map(
-                    ([platform, handle]) => {
-                      const icons = {
-                        twitter: Twitter,
-                        linkedin: Linkedin,
-                        github: Github,
-                        instagram: Instagram,
-                      };
-                      const IconComponent = icons[platform];
-                      return (
-                        <a
-                          key={platform}
-                          href="#"
-                          className="text-gray-500 hover:text-purple-600"
-                        >
-                          <IconComponent className="h-4 w-4" />
-                        </a>
-                      );
-                    }
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mt-4">
-                {(user?.badges ?? []).slice(0, 3).map((badge, index) => (
-                  <span
-                    key={index}
-                    className="bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full font-medium"
-                  >
-                    {badge}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex space-x-3">
-              {isEditing ? (
-                <>
-                  <button
-                    onClick={handleSaveProfile}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center space-x-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    <span>Save</span>
-                  </button>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-400 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span>Edit Profile</span>
-                  </button>
-                  <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                    <Settings className="h-4 w-4" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          <Video className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-gray-800">
-            {userVideos.filter((v) => v.status === "published").length}
-          </div>
-          <div className="text-sm text-gray-600">Videos Created</div>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-gray-800">156</div>
-          <div className="text-sm text-gray-600">Students Taught</div>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          <Clock className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-gray-800">42h</div>
-          <div className="text-sm text-gray-600">Teaching Hours</div>
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-md text-center">
-          <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-          <div className="text-2xl font-bold text-gray-800">
-            {analyticsData.averageRating}
-          </div>
-          <div className="text-sm text-gray-600">Average Rating</div>
-        </div>
-      </div>
-
       {/* Tab Navigation */}
       <div className="bg-white rounded-xl shadow-md mb-8">
         <div className="border-b border-gray-200">
@@ -1173,11 +969,7 @@ const tabs = [
               </div>
             </div>
           )}
-
-          {/* {activeTab === "settings" && <settingsPage />} */}
-          {/* Leaderboard */}
           {activeTab === "leaderboard" && <LeaderboardPage />}
-
         </div>
       </div>
     </div>

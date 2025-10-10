@@ -32,10 +32,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# ✅ Add both localhost + deployed frontend
+origins = [
+    "http://localhost:3000",   # for local dev
+    "https://skillswap-platform-17zv.onrender.com/",  # ⬅️ replace with your actual frontend Render URL
+]
+
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

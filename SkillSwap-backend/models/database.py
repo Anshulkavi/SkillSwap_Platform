@@ -28,10 +28,7 @@ load_dotenv()
 
 
 # Database URL - modify for production
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://user:password@localhost:5432/skillswap_db"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # SQLite for development (comment out for production)
 # DATABASE_URL = "sqlite:///./skillswap.db"

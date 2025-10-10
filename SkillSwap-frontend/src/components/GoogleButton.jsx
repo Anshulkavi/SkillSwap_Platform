@@ -28,13 +28,16 @@ import React from "react";
 
 // Accept an 'onClick' prop
 export default function GoogleLoginButton({ onClick }) {
+
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+
   const handleGoogleLogin = () => {
     // If a function was passed in the onClick prop, run it first
     if (onClick) {
       onClick();
     }
     // Then, continue with the Google login
-    window.location.href = "http://localhost:8000/api/auth/google/login";
+    window.location.href = `${BACKEND_URL}/api/auth/google/login`;
   };
 
   return (

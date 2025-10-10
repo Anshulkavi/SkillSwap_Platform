@@ -5,7 +5,7 @@ const BASE_URL =
   import.meta.env.VITE_BACKEND_URL ||
   (window.location.hostname === 'localhost'
     ? 'http://localhost:8000'
-    : 'https://skillswap-backend-rnr8.onrender.com/'); // ⬅️ your Render backend URL
+    : 'https://skillswap-backend-rnr8.onrender.com');
 
 const api = axios.create({
   baseURL: BASE_URL,

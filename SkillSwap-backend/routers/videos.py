@@ -444,6 +444,42 @@ def clean_filename(filename: str) -> str:
     return filename
 
 # Upload video
+# @router.post("", response_model=VideoResponse, status_code=status.HTTP_201_CREATED)
+# async def upload_video(
+#     file: UploadFile = File(...),
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     if not file.content_type.startswith("video/"):
+#         raise HTTPException(status_code=400, detail="Invalid file type. Only videos are allowed.")
+
+#     clean_public_id = clean_filename(file.filename.split(".")[0])
+
+#     result = cloudinary.uploader.upload(
+#         file.file,
+#         folder=f"skillswap_videos/{current_user.id}",
+#         public_id=clean_public_id,
+#         overwrite=True,
+#         resource_type="video",
+#         format="mp4"
+#     )
+
+#     # video_url = result.get("secure_url", "").replace("/upload/", "/upload/f_mp4/")
+#     video_url = result.get("secure_url")
+
+
+#     video = Video(
+#         title=clean_public_id,
+#         description="Uploaded via SkillSwap",
+#         video_url=video_url,
+#         user_id=current_user.id
+#     )
+#     db.add(video)
+#     db.commit()
+#     db.refresh(video)
+
+#     return video   # 👈 will be serialized by VideoResponse
+
 @router.post("", response_model=VideoResponse, status_code=status.HTTP_201_CREATED)
 async def upload_video(
     file: UploadFile = File(...),
@@ -455,30 +491,39 @@ async def upload_video(
 
     clean_public_id = clean_filename(file.filename.split(".")[0])
 
-    result = cloudinary.uploader.upload(
-        file.file,
-        folder=f"skillswap_videos/{current_user.id}",
-        public_id=clean_public_id,
-        overwrite=True,
-        resource_type="video",
-        format="mp4"
-    )
+    try:
+        # ✅ FIX: Upload large videos asynchronously
+        result = cloudinary.uploader.upload(
+            file.file,
+            folder=f"skillswap_videos/{current_user.id}",
+            public_id=clean_public_id,
+            overwrite=True,
+            resource_type="video",
+            eager=[{"format": "mp4"}],
+            eager_async=True
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cloudinary upload failed: {e}")
 
-    # video_url = result.get("secure_url", "").replace("/upload/", "/upload/f_mp4/")
-    video_url = result.get("secure_url")
+    # ✅ Extract video URL safely
+    video_url = result.get("secure_url") or result.get("url")
+    if not video_url:
+        video_url = f"https://res.cloudinary.com/{os.getenv('CLOUDINARY_CLOUD_NAME')}/video/upload/skillswap_videos/{current_user.id}/{clean_public_id}.mp4"
 
-
+    # ✅ Save video metadata in DB
     video = Video(
         title=clean_public_id,
         description="Uploaded via SkillSwap",
         video_url=video_url,
         user_id=current_user.id
     )
+
     db.add(video)
     db.commit()
     db.refresh(video)
 
-    return video   # 👈 will be serialized by VideoResponse
+    return video
+
 
 # Get videos with filters
 @router.get("", response_model=List[VideoResponse])

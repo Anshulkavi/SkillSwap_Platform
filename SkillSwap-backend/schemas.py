@@ -30,7 +30,7 @@ class UserResponse(UserBase):
     profile_visibility: str = "public"
     show_online_status: bool = True
     allow_direct_messages: bool = True
-    created_at: datetime
+    created_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True

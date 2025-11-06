@@ -36,6 +36,7 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",   # for local dev
     "https://skillswap-platform-17zv.onrender.com",  # ⬅️ replace with your actual frontend Render URL
+    "http://localhost:3000",
 ]
 
 # CORS Configuration

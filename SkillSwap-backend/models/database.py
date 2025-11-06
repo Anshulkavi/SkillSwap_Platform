@@ -1,21 +1,41 @@
 # # models/database.py
-# from sqlmodel import create_engine, Session
+
+# from sqlalchemy import create_engine
+# from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.orm import sessionmaker
 # import os
 # from dotenv import load_dotenv
 
-# # 👇 yeh add karo
+# # # 👇 yeh add karo
 # load_dotenv()
 
+
+# # Database URL - modify for production
 # DATABASE_URL = os.getenv("DATABASE_URL")
 
-# if not DATABASE_URL:
-#     raise ValueError("DATABASE_URL is not set. Please check your .env file.")
+# # SQLite for development (comment out for production)
+# # DATABASE_URL = "sqlite:///./skillswap.db"
 
-# engine = create_engine(DATABASE_URL)
+# engine = create_engine(
+#     DATABASE_URL,
+#     # For SQLite only
+#     # connect_args={"check_same_thread": False}
+# )
 
-# def get_session():
-#     with Session(engine) as session:
-#         yield session
+# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Base = declarative_base()
+
+# # Dependency to get DB session
+# def get_db():
+#     db = SessionLocal()
+#     try:
+#         yield db
+#     finally:
+#         db.close()
+
+
+# models/database.py
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -23,27 +43,28 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
-# # 👇 yeh add karo
+# Load environment variables
 load_dotenv()
 
-
-# Database URL - modify for production
+# Get the DATABASE_URL from .env
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# SQLite for development (comment out for production)
-# DATABASE_URL = "sqlite:///./skillswap.db"
+if not DATABASE_URL:
+    raise ValueError("❌ DATABASE_URL not found in environment variables")
 
+# Create SQLAlchemy engine
 engine = create_engine(
     DATABASE_URL,
-    # For SQLite only
-    # connect_args={"check_same_thread": False}
+    connect_args={"sslmode": "require"} if "neon.tech" in DATABASE_URL else {}
 )
 
+# Create session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Base class for models
 Base = declarative_base()
 
-# Dependency to get DB session
+# Dependency for FastAPI routes
 def get_db():
     db = SessionLocal()
     try:

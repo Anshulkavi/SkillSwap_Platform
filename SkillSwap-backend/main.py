@@ -11,7 +11,7 @@ load_dotenv()
 from models.database import engine, Base
 from routers import (
     login, signup, profile, skill_exchange, 
-    community, leaderboard, videos, chat, video_call
+    community, leaderboard, videos, chat, video_call, user
 )
 
 # 👇 CORRECTED: Only one lifespan function
@@ -58,6 +58,7 @@ app.include_router(leaderboard.router, prefix="/api/leaderboard", tags=["Leaderb
 app.include_router(videos.router, prefix="/api/videos", tags=["Videos"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(video_call.router, prefix="/api/video-call", tags=["Video Call"])
+app.include_router(user.router, prefix="/api/users", tags=["Users"])
 
 @app.get("/")
 async def root():

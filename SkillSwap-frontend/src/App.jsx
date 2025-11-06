@@ -1,17 +1,28 @@
-// import React, { Suspense } from 'react';
-// import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-// import { AuthProvider } from './context/AuthContext';
-// import Layout from './components/Layout';
-// import Loading from './components/Loading';
-// import ProtectedRoute from './components/ProtectedRoute';
-// import Login from './components/Login';
-// import Signup from './components/Signup';
-// import HomePage from './pages/HomePage';
-// import VideosPage from './pages/VideosPage';
-// import SkillExchangePage from './pages/SkillExchangePage';
-// import CommunityPage from './pages/CommunityPage';
-// import LeaderboardPage from './pages/LeaderboardPage';
-// import ProfilePage from './pages/ProfilePage';
+// import React, { Suspense } from "react";
+// import {
+//   BrowserRouter as Router,
+//   Routes,
+//   Route,
+//   Navigate,
+// } from "react-router-dom";
+// import { AuthProvider } from "./context/AuthContext";
+// import Layout from "./components/Layout";
+// import Loading from "./components/Loading";
+// import ProtectedRoute from "./components/ProtectedRoute";
+// import Login from "./components/Login";
+// import Signup from "./components/Signup";
+
+// // Import Pages
+// // Import Pages
+// import HomePage from "./pages/HomePage";
+// import VideosPage from "./pages/VideosPage";
+// import VideoDetailPage from "./pages/VideoDetailPage"; // <-- add this
+// import SkillExchangePage from "./pages/SkillExchangePage";
+// import CommunityPage from "./pages/CommunityPage";
+// import ChatRoom from "./pages/ChatRoom";
+// import ChatLayout from "./pages/ChatLayout";
+// import ProfilePage from "./pages/ProfilePage";
+// import SettingsPage from "./pages/Settings"; // if used
 
 // const App = () => {
 //   return (
@@ -48,11 +59,15 @@
 //       <Routes>
 //         <Route path="/" element={<HomePage />} />
 //         <Route path="/videos" element={<VideosPage />} />
+//         {/* 👇 2. Add the new route for the detail page */}
+//         <Route path="/videos/:videoId" element={<VideoDetailPage />} />
 //         <Route path="/skill-exchange" element={<SkillExchangePage />} />
 //         <Route path="/community" element={<CommunityPage />} />
-//         <Route path="/leaderboard" element={<LeaderboardPage />} />
+//         {/* <Route path="/leaderboard" element={<LeaderboardPage />} /> */}
 //         <Route path="/profile" element={<ProfilePage />} />
-        
+//         <Route path="/settings" element={<SettingsPage />} />
+//         <Route path="/chat" element={<ChatLayout />} />
+// <Route path="/chat/*" element={<ChatLayout />} />
 //         {/* Catch all route - redirect to home */}
 //         <Route path="*" element={<Navigate to="/" replace />} />
 //       </Routes>
@@ -62,25 +77,29 @@
 
 // export default App;
 
-import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import Layout from './components/Layout';
-import Loading from './components/Loading';
-import ProtectedRoute from './components/ProtectedRoute';
-import Login from './components/Login';
-import Signup from './components/Signup';
+import React, { Suspense } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import Layout from "./components/Layout";
+import Loading from "./components/Loading";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
 
-// Import Pages
-// Import Pages
-import HomePage from './pages/HomePage';
-import VideosPage from './pages/VideosPage';
-import VideoDetailPage from './pages/VideoDetailPage'; // <-- add this
-import SkillExchangePage from './pages/SkillExchangePage';
-import CommunityPage from './pages/CommunityPage';
-// import LeaderboardPage from './pages/LeaderboardPage';
-import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/Settings'; // if used
+// Pages
+import HomePage from "./pages/HomePage";
+import VideosPage from "./pages/VideosPage";
+import VideoDetailPage from "./pages/VideoDetailPage";
+import SkillExchangePage from "./pages/SkillExchangePage";
+import CommunityPage from "./pages/CommunityPage";
+import ChatLayout from "./pages/ChatLayout"; // ✅ single entry for all chat
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/Settings"; // optional
 
 const App = () => {
   return (
@@ -89,11 +108,11 @@ const App = () => {
         <div className="min-h-screen bg-gray-50">
           <Suspense fallback={<Loading />}>
             <Routes>
-              {/* Public routes - No Layout */}
+              {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
 
-              {/* Protected routes - With Layout */}
+              {/* Protected routes */}
               <Route
                 path="/*"
                 element={
@@ -110,25 +129,23 @@ const App = () => {
   );
 };
 
-// Wrapper component for layout and nested routes
+// Layout wrapper with sidebar/nav
 const LayoutWrapper = () => {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/videos" element={<VideosPage />} />
-        
-        {/* 👇 2. Add the new route for the detail page */}
         <Route path="/videos/:videoId" element={<VideoDetailPage />} />
-        
         <Route path="/skill-exchange" element={<SkillExchangePage />} />
         <Route path="/community" element={<CommunityPage />} />
-        {/* <Route path="/leaderboard" element={<LeaderboardPage />} /> */}
-        <Route path="/profile" element={<ProfilePage />} /> 
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
 
+        {/* ✅ Single Chat route — handles /chat & /chat/:roomId */}
+        <Route path="/chat/*" element={<ChatLayout />} />
 
-        {/* Catch all route - redirect to home */}
+        {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

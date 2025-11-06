@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Floa
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from models.database import Base
+from uuid import uuid4
 
 # 👇 NEW: Define the many-to-many association table for likes
 listing_likes = Table('listing_likes', Base.metadata,
@@ -88,6 +89,7 @@ class Request(Base):
     
     message = Column(Text, nullable=True)
     status = Column(String(50), default="pending")
+    room_id = Column(String(100), default=lambda: str(uuid4()), unique=True)  # ✅ Unique chat room
     
     scheduled_time = Column(DateTime(timezone=True), nullable=True)
     duration = Column(Integer, nullable=True)
@@ -97,6 +99,10 @@ class Request(Base):
     
     listing = relationship("Listing", back_populates="requests")
 
+    # Optional relationships (helpful later)
+    from_user = relationship("User", foreign_keys=[from_user_id])
+    to_user = relationship("User", foreign_keys=[to_user_id])
+    
 class Review(Base):
     __tablename__ = "reviews"
     

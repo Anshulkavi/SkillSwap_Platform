@@ -15,7 +15,15 @@ const ChatRoom = () => {
   const chatEndRef = useRef(null);
 
   const token = localStorage.getItem("skillswap_access_token");
-  const wsUrl = `ws://localhost:8000/api/chat/ws/${roomId}?token=${token}`;
+  // const wsUrl = `ws://localhost:8000/api/chat/ws/${roomId}?token=${token}`;
+
+    const wsBase =
+  import.meta.env.MODE === "development"
+    ? "ws://localhost:8000"
+    : "wss://skillswap-backend-rnr8.onrender.com";
+
+const wsUrl = `${wsBase}/api/chat/ws/${roomId}?token=${token}`;
+
   const { lastMessage, sendMessage } = useWebSocket(wsUrl);
 
   // Load chat history + peer info

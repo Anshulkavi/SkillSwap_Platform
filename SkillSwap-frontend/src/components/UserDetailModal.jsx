@@ -24,13 +24,20 @@ const UserDetailModal = ({ listing, onClose }) => {
 
   const isOwner = currentUser?.id === user?.id;
 
-  // 🟣 Start Chat
-  const handleChat = () => {
-    if (isOwner) return alert("You cannot chat with yourself.");
-    const roomId = `room_${[currentUser?.id, user.id].sort().join("_")}`;
+// 🟣 Start Chat
+const handleChat = async () => {
+  if (isOwner) return alert("You cannot chat with yourself.");
+  try {
+    const res = await api.post(`/api/chat/start?user_id=${user.id}`);
+    const roomId = res.data.room_id;
     onClose();
     navigate(`/chat/${roomId}`);
-  };
+  } catch (err) {
+    console.error("❌ Failed to start chat:", err);
+    alert("Failed to start chat. Please try again.");
+  }
+};
+
 
   // 💌 Add Friend
   const handleFriendRequest = async () => {

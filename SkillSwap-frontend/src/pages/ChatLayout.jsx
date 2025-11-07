@@ -41,13 +41,13 @@
 // src/pages/ChatLayout.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import ChatList from "../pages/ChatList";
+import ChatList from "../components/ChatList";
 import ChatRoom from "./ChatRoom";
 import { useAuth } from "../context/AuthContext";
 
 const ChatLayout = () => {
   const { user } = useAuth();
-  const { roomId } = useParams(); // can be undefined on /chat
+  const { roomId } = useParams();
   const [activeRoomId, setActiveRoomId] = useState(roomId || null);
   const navigate = useNavigate();
 

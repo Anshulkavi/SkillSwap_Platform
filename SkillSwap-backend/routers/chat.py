@@ -1,9 +1,10 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query, status
+#chat.py
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query, status, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
-from typing import List
 import json
 from jose import JWTError, jwt
+from typing import List
 from models.database import get_db
 from models.models import ChatMessage, User
 from websocket_manager import manager
@@ -32,16 +33,15 @@ async def chat_websocket(
         print("❌ Invalid or expired token")
         return
 
-    # ✅ Accept connection only if JWT is valid
+    # ✅ Accept connection after token validation
     await manager.connect(websocket, room_id)
 
     try:
-        # Fetch and send chat history
+        # Send existing chat history
         history = (
             db.query(ChatMessage)
             .filter(ChatMessage.room_id == room_id)
-            .order_by(ChatMessage.created_at.desc())
-            .limit(50)
+            .order_by(ChatMessage.created_at.asc())
             .all()
         )
 
@@ -51,9 +51,9 @@ async def chat_websocket(
                 {
                     "content": msg.content,
                     "sender_id": msg.sender_id,
-                    "timestamp": msg.created_at.isoformat()
+                    "timestamp": msg.created_at.isoformat(),
                 }
-                for msg in reversed(history)
+                for msg in history
             ]
         })
 
@@ -92,48 +92,34 @@ async def chat_websocket(
 # 🔹 Fetch Chat History
 # -----------------------------
 @router.get("/history/{room_id}")
-async def get_chat_history(
-    room_id: str,
-    limit: int = Query(50, ge=1, le=200),
-    db: Session = Depends(get_db),
-):
-    """Get chat history for a specific room"""
+async def get_chat_history(room_id: str, db: Session = Depends(get_db)):
+    """Get full chat history for a room"""
     messages = (
         db.query(ChatMessage)
         .filter(ChatMessage.room_id == room_id)
-        .order_by(ChatMessage.created_at.desc())
-        .limit(limit)
+        .order_by(ChatMessage.created_at.asc())
         .all()
     )
-
     return {
         "room_id": room_id,
         "messages": [
             {
-                "id": msg.id,
-                "content": msg.content,
-                "sender_id": msg.sender_id,
-                "message_type": msg.message_type,
-                "timestamp": msg.created_at.isoformat(),
+                "content": m.content,
+                "sender_id": m.sender_id,
+                "timestamp": m.created_at.isoformat(),
             }
-            for msg in reversed(messages)
+            for m in messages
         ],
     }
 
 
 # -----------------------------
-# 🔹 List User Conversations
+# 🔹 List Conversations
 # -----------------------------
 @router.get("/conversations")
 async def get_conversations(
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    """
-    Return list of conversations for the current user.
-    Each conversation: room_id, partner {id, name, avatar},
-    last_message, timestamp, unread_count.
-    """
-    # ✅ Find all room IDs where current user participates
     rooms = (
         db.query(ChatMessage.room_id)
         .filter(
@@ -149,7 +135,6 @@ async def get_conversations(
 
     convos = []
     for room_id in room_ids:
-        # Last message
         last_msg = (
             db.query(ChatMessage)
             .filter(ChatMessage.room_id == room_id)
@@ -159,24 +144,14 @@ async def get_conversations(
         if not last_msg:
             continue
 
-        # Infer partner ID from room name
+        parts = room_id.split("_")
         try:
-            parts = room_id.split("_")
             a, b = int(parts[1]), int(parts[2])
             partner_id = a if b == current_user.id else b
         except Exception:
             continue
 
         partner = db.query(User).filter(User.id == partner_id).first()
-
-        unread_count = (
-            db.query(func.count(ChatMessage.id))
-            .filter(
-                ChatMessage.room_id == room_id,
-                ChatMessage.sender_id != current_user.id
-            )
-            .scalar()
-        ) or 0
 
         convos.append({
             "room_id": room_id,
@@ -186,9 +161,38 @@ async def get_conversations(
                 "avatar": partner.avatar if partner else None,
             },
             "last_message": last_msg.content,
-            "timestamp": last_msg.created_at.isoformat()
-            if last_msg.created_at else None,
-            "unread_count": int(unread_count),
+            "timestamp": last_msg.created_at.isoformat() if last_msg.created_at else None,
         })
 
     return sorted(convos, key=lambda x: x["timestamp"] or "", reverse=True)
+
+
+# -----------------------------
+# 🔹 Start / Create Chat Room
+# -----------------------------
+@router.post("/start")
+async def start_chat(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create or return an existing chat room between two users."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot chat with yourself")
+
+    small, big = sorted([current_user.id, user_id])
+    room_id = f"room_{small}_{big}"
+
+    # Create initial message if room empty
+    exists = db.query(ChatMessage).filter(ChatMessage.room_id == room_id).first()
+    if not exists:
+        msg = ChatMessage(
+            room_id=room_id,
+            sender_id=current_user.id,
+            content="👋 Chat started",
+            message_type="system"
+        )
+        db.add(msg)
+        db.commit()
+
+    return {"room_id": room_id, "message": "Chat ready"}

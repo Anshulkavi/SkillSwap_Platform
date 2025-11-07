@@ -26,9 +26,7 @@ const ChatRoom = () => {
       : "wss://skillswap-backend-rnr8.onrender.com";
 
   const wsUrl =
-    roomId && token
-      ? `${wsBase}/api/chat/ws/${roomId}?token=${token}`
-      : null;
+    roomId && token ? `${wsBase}/api/chat/ws/${roomId}?token=${token}` : null;
 
   const { socket, lastMessage, sendMessage, readyState } = useWebSocket(wsUrl);
 
@@ -47,7 +45,9 @@ const ChatRoom = () => {
     const fetchHistory = async () => {
       try {
         const res = await api.get(`/api/chat/history/${roomId}`);
-        const valid = res.data.messages.filter((m) => !m.content.startsWith("👋"));
+        const valid = res.data.messages.filter(
+          (m) => !m.content.startsWith("👋")
+        );
         setMessages(valid);
       } catch (err) {
         console.error("❌ Failed to load chat history:", err);
@@ -108,7 +108,9 @@ const ChatRoom = () => {
   if (!roomId)
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900 text-slate-100">
-        <p className="text-lg">⚠️ No chat selected. Go back to your chat list.</p>
+        <p className="text-lg">
+          ⚠️ No chat selected. Go back to your chat list.
+        </p>
       </div>
     );
 

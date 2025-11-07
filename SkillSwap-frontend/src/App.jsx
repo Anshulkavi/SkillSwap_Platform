@@ -143,7 +143,8 @@ const LayoutWrapper = () => {
         <Route path="/settings" element={<SettingsPage />} />
 
         {/* ✅ Single Chat route — handles /chat & /chat/:roomId */}
-        <Route path="/chat/*" element={<ChatLayout />} />
+        <Route path="/chat" element={<ChatLayout />} />
+  <Route path="/chat/:roomId" element={<ChatLayout />} />
 
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />

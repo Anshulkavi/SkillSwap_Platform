@@ -83,6 +83,15 @@ const ChatRoom = () => {
     setInput("");
   };
 
+  if (!roomId) {
+  return (
+    <div className="flex items-center justify-center h-screen bg-slate-900 text-slate-100">
+      <p className="text-lg">⚠️ No chat selected. Go back to your chat list.</p>
+    </div>
+  );
+}
+
+
   if (!token)
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900">

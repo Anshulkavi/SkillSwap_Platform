@@ -10,6 +10,15 @@ const ChatRoom = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // 🚨 Guard early — if no roomId
+  if (!roomId) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-slate-100">
+        <p className="text-lg">⚠️ No chat selected. Go back to your chat list.</p>
+      </div>
+    );
+  }
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [partner, setPartner] = useState(null);
@@ -18,23 +27,28 @@ const ChatRoom = () => {
   const chatEndRef = useRef(null);
 
   const token = localStorage.getItem("skillswap_access_token");
+
   const wsBase =
     import.meta.env.MODE === "development"
       ? "ws://localhost:8000"
       : "wss://skillswap-backend-rnr8.onrender.com";
 
-  const wsUrl = `${wsBase}/api/chat/ws/${roomId}?token=${token}`;
+  // ✅ Only initialize WebSocket if roomId exists
+  const wsUrl = roomId ? `${wsBase}/api/chat/ws/${roomId}?token=${token}` : null;
   const { socket, lastMessage, sendMessage, readyState } = useWebSocket(wsUrl);
 
   // Partner info
   useEffect(() => {
+    if (!roomId) return;
     const ids = roomId.replace("room_", "").split("_").map(Number);
     const partnerId = ids.find((id) => id !== user.id);
-    if (partnerId) api.get(`/api/users/${partnerId}`).then((res) => setPartner(res.data));
+    if (partnerId)
+      api.get(`/api/users/${partnerId}`).then((res) => setPartner(res.data));
   }, [roomId, user.id]);
 
   // Chat history
   useEffect(() => {
+    if (!roomId) return;
     const fetchHistory = async () => {
       try {
         const res = await api.get(`/api/chat/history/${roomId}`);
@@ -47,11 +61,12 @@ const ChatRoom = () => {
     fetchHistory();
   }, [roomId]);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Incoming socket messages
+  // Incoming WebSocket messages
   useEffect(() => {
     if (!lastMessage) return;
     const data = JSON.parse(lastMessage.data);
@@ -82,15 +97,6 @@ const ChatRoom = () => {
     sendMessage(JSON.stringify(msg));
     setInput("");
   };
-
-  if (!roomId) {
-  return (
-    <div className="flex items-center justify-center h-screen bg-slate-900 text-slate-100">
-      <p className="text-lg">⚠️ No chat selected. Go back to your chat list.</p>
-    </div>
-  );
-}
-
 
   if (!token)
     return (
@@ -144,7 +150,9 @@ const ChatRoom = () => {
           messages.map((msg, i) => (
             <div
               key={i}
-              className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
+              className={`flex ${
+                msg.sender_id === user.id ? "justify-end" : "justify-start"
+              }`}
             >
               <div
                 className={`max-w-xs px-4 py-2 rounded-xl text-sm shadow ${

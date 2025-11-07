@@ -33,13 +33,15 @@ app = FastAPI(
 )
 
 # ✅ Add both localhost + deployed frontend
+# ✅ CORS Configuration
 origins = [
-    "http://localhost:3000",          # Local React dev
-    "https://localhost:3000",         # Secure local dev (optional for future)
-    "https://skillswap-platform-17zv.onrender.com",  # ✅ Deployed frontend on Render
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "https://skillswap-platform-17zv.onrender.com",
+    "https://skillswap-platform-17zv.onrender.com/",
+    "https://skillswap-platform-17zv.onrender.com:443",
 ]
 
-# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

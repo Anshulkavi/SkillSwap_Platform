@@ -20,7 +20,7 @@ async def chat_websocket(
     websocket: WebSocket,
     room_id: str,
     token: str = Query(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Authenticated WebSocket endpoint"""
     try:
@@ -33,15 +33,16 @@ async def chat_websocket(
         print("❌ Invalid or expired token")
         return
 
-    # ✅ Accept connection after token validation
     await manager.connect(websocket, room_id)
+    print(f"✅ User {user_id} connected to {room_id}")
 
     try:
-        # Send existing chat history
+        # Send last 50 messages
         history = (
             db.query(ChatMessage)
             .filter(ChatMessage.room_id == room_id)
             .order_by(ChatMessage.created_at.asc())
+            .limit(50)
             .all()
         )
 
@@ -57,34 +58,57 @@ async def chat_websocket(
             ]
         })
 
-        # Listen for new messages
+        # Notify others: user joined / online
+        await manager.broadcast(
+            room_id,
+            {"type": "presence", "user_id": user_id, "status": "online"},
+        )
+
+        # Listen for incoming events
         while True:
             data = await websocket.receive_text()
             message_data = json.loads(data)
+            msg_type = message_data.get("type", "text")
 
-            new_message = ChatMessage(
-                room_id=room_id,
-                sender_id=message_data.get("sender_id"),
-                content=message_data.get("content"),
-                message_type=message_data.get("message_type", "text"),
-            )
-            db.add(new_message)
-            db.commit()
+            if msg_type == "typing":
+                # Notify partner only — not sender
+                await manager.broadcast(
+                    room_id,
+                    {"type": "typing", "user_id": user_id, "is_typing": True},
+                )
+                continue
 
-            await manager.broadcast(
-                room_id,
-                {
-                    "type": "message",
-                    "content": new_message.content,
-                    "sender_id": new_message.sender_id,
-                    "timestamp": new_message.created_at.isoformat(),
-                },
-            )
+            elif msg_type == "ping":
+                # Heartbeat, ignore silently
+                continue
+
+            elif msg_type == "text":
+                # Save message to DB
+                new_message = ChatMessage(
+                    room_id=room_id,
+                    sender_id=message_data.get("sender_id"),
+                    content=message_data.get("content"),
+                    message_type="text",
+                )
+                db.add(new_message)
+                db.commit()
+
+                await manager.broadcast(
+                    room_id,
+                    {
+                        "type": "message",
+                        "content": new_message.content,
+                        "sender_id": new_message.sender_id,
+                        "timestamp": new_message.created_at.isoformat(),
+                    },
+                )
 
     except WebSocketDisconnect:
         manager.disconnect(websocket, room_id)
+        print(f"❌ User {user_id} disconnected from {room_id}")
         await manager.broadcast(
-            room_id, {"type": "system", "message": f"User {user_id} disconnected"}
+            room_id,
+            {"type": "presence", "user_id": user_id, "status": "offline"},
         )
 
 

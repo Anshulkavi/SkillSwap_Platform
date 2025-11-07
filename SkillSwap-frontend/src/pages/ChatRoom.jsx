@@ -9,38 +9,37 @@ const ChatRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [partner, setPartner] = useState(null);
+  const [partnerStatus, setPartnerStatus] = useState("offline");
+  const [typingUser, setTypingUser] = useState(null);
   const chatEndRef = useRef(null);
 
   const token = localStorage.getItem("skillswap_access_token");
-  // const wsUrl = `ws://localhost:8000/api/chat/ws/${roomId}?token=${token}`;
-
   const wsBase =
-  import.meta.env.MODE === "development"
-    ? "ws://localhost:8000"
-    : "wss://skillswap-backend-rnr8.onrender.com";
+    import.meta.env.MODE === "development"
+      ? "ws://localhost:8000"
+      : "wss://skillswap-backend-rnr8.onrender.com";
 
-const wsUrl = `${wsBase}/api/chat/ws/${roomId}?token=${token}`;
+  const wsUrl = `${wsBase}/api/chat/ws/${roomId}?token=${token}`;
+  const { socket, lastMessage, sendMessage, readyState } = useWebSocket(wsUrl);
 
-  const { lastMessage, sendMessage, readyState } = useWebSocket(wsUrl);
-
-  // Derive partner ID from roomId
+  // Partner info
   useEffect(() => {
     const ids = roomId.replace("room_", "").split("_").map(Number);
     const partnerId = ids.find((id) => id !== user.id);
-    if (partnerId) {
-      api.get(`/api/users/${partnerId}`).then((res) => setPartner(res.data));
-    }
+    if (partnerId) api.get(`/api/users/${partnerId}`).then((res) => setPartner(res.data));
   }, [roomId, user.id]);
 
-  // Load message history
+  // Chat history
   useEffect(() => {
     const fetchHistory = async () => {
       try {
         const res = await api.get(`/api/chat/history/${roomId}`);
-        setMessages(res.data.messages || []);
+        const valid = res.data.messages.filter((m) => !m.content.startsWith("👋"));
+        setMessages(valid);
       } catch (err) {
         console.error("❌ Failed to load chat history:", err);
       }
@@ -48,40 +47,46 @@ const wsUrl = `${wsBase}/api/chat/ws/${roomId}?token=${token}`;
     fetchHistory();
   }, [roomId]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle WebSocket messages
+  // Incoming socket messages
   useEffect(() => {
     if (!lastMessage) return;
     const data = JSON.parse(lastMessage.data);
+
     if (data.type === "history") {
-      setMessages(data.messages);
-    } else if (data.type === "message") {
+      setMessages(data.messages.filter((m) => !m.content.startsWith("👋")));
+    } else if (data.type === "message" && !data.content.startsWith("👋")) {
       setMessages((prev) => [...prev, data]);
+    } else if (data.type === "typing" && data.user_id !== user.id) {
+      setTypingUser(data.user_id);
+      setTimeout(() => setTypingUser(null), 3000);
+    } else if (data.type === "presence" && data.user_id !== user.id) {
+      setPartnerStatus(data.status);
     }
   }, [lastMessage]);
+
+  const handleTyping = (e) => {
+    setInput(e.target.value);
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "typing", user_id: user.id }));
+    }
+  };
 
   const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-
-    const msg = {
-      sender_id: user.id,
-      content: input.trim(),
-      message_type: "text",
-    };
-
+    const msg = { sender_id: user.id, content: input.trim(), type: "text" };
     sendMessage(JSON.stringify(msg));
     setInput("");
   };
 
   if (!token)
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <p className="text-center text-red-500 text-lg font-medium">
+      <div className="flex items-center justify-center h-screen bg-slate-900">
+        <p className="text-center text-red-400 text-lg font-medium">
           ⚠️ Please log in to use chat.
         </p>
       </div>
@@ -90,9 +95,9 @@ const wsUrl = `${wsBase}/api/chat/ws/${roomId}?token=${token}`;
   return (
     <div className="flex flex-col h-screen bg-slate-900 text-slate-100">
       {/* Header */}
-      <header className="flex items-center p-4 bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg">
+      <header className="flex items-center p-4 bg-gradient-to-r from-purple-600 to-indigo-600 shadow-md">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/chat")}
           className="mr-3 p-2 hover:bg-purple-500/30 rounded-full"
         >
           <ArrowLeft size={20} />
@@ -102,11 +107,17 @@ const wsUrl = `${wsBase}/api/chat/ws/${roomId}?token=${token}`;
             <img
               src={partner.avatar || "/api/placeholder/40/40"}
               alt={partner.name}
-              className="w-10 h-10 rounded-full border-2 border-white"
+              className="w-10 h-10 rounded-full border-2 border-white object-cover"
             />
             <div>
               <h2 className="font-semibold text-lg">{partner.name}</h2>
-              <p className="text-xs text-slate-200">Online</p>
+              <p className="text-xs text-slate-200">
+                {typingUser
+                  ? "typing..."
+                  : partnerStatus === "online"
+                  ? "Online"
+                  : "Offline"}
+              </p>
             </div>
           </div>
         ) : (
@@ -116,48 +127,53 @@ const wsUrl = `${wsBase}/api/chat/ws/${roomId}?token=${token}`;
 
       {/* Messages */}
       <main className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`flex ${
-              msg.sender_id === user.id ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div
-              className={`max-w-xs px-4 py-2 rounded-xl text-sm shadow ${
-                msg.sender_id === user.id
-                  ? "bg-purple-600 text-white"
-                  : "bg-slate-800 text-slate-200 border border-slate-700"
-              }`}
-            >
-              <p>{msg.content}</p>
-              <span className="text-xs text-slate-400 block mt-1 text-right">
-                {new Date(msg.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
+        {messages.length === 0 ? (
+          <div className="text-center text-slate-400 mt-10">
+            Say hi 👋 to start chatting!
           </div>
-        ))}
+        ) : (
+          messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-xs px-4 py-2 rounded-xl text-sm shadow ${
+                  msg.sender_id === user.id
+                    ? "bg-purple-600 text-white rounded-br-none"
+                    : "bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-none"
+                }`}
+              >
+                <p>{msg.content}</p>
+                <span className="text-xs text-slate-400 block mt-1 text-right">
+                  {new Date(msg.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
         <div ref={chatEndRef} />
       </main>
 
       {/* Input */}
       <form
         onSubmit={handleSend}
-        className="p-4 flex items-center border-t border-slate-800 bg-slate-850"
+        className="p-4 flex items-center border-t border-slate-800 bg-slate-900"
       >
         <input
           type="text"
           placeholder="Type a message..."
           className="flex-1 bg-slate-800 text-slate-200 px-3 py-2 rounded-lg border border-slate-700 focus:ring-2 focus:ring-purple-500 focus:outline-none"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleTyping}
         />
         <button
           type="submit"
-          className="ml-3 bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition"
+          disabled={!readyState || readyState !== 1}
+          className="ml-3 bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition disabled:opacity-50"
         >
           <Send className="h-5 w-5" />
         </button>

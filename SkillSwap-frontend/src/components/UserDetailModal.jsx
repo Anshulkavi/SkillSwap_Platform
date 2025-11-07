@@ -24,20 +24,15 @@ const UserDetailModal = ({ listing, onClose }) => {
 
   const isOwner = currentUser?.id === user?.id;
 
-// 🟣 Start Chat
-const handleChat = async () => {
-  if (isOwner) return alert("You cannot chat with yourself.");
-  try {
-    const res = await api.post(`/api/chat/start?user_id=${user.id}`);
-    const roomId = res.data.room_id;
-    onClose();
-    navigate(`/chat/${roomId}`);
-  } catch (err) {
-    console.error("❌ Failed to start chat:", err);
-    alert("Failed to start chat. Please try again.");
-  }
-};
-
+  // 🟣 Start Chat
+  const handleChatNow = async (partnerId) => {
+    try {
+      const res = await api.post("/api/chat/start", { user_id: partnerId });
+      navigate(`/chat/${res.data.room_id}`);
+    } catch (err) {
+      console.error("❌ Failed to start chat:", err);
+    }
+  };
 
   // 💌 Add Friend
   const handleFriendRequest = async () => {
@@ -162,15 +157,12 @@ const handleChat = async () => {
             </button>
 
             <button
-              onClick={handleChat}
-              className="flex items-center px-5 py-2.5 rounded-lg font-medium bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 shadow-md"
+              onClick={() => handleChatNow(user.id)} // ✅ or selectedUser.id if that's your variable
+              className="w-full mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
             >
-              <MessageSquare size={18} className="mr-2" />
-              Chat Now
+              💬 Chat Now
             </button>
-            
           </div>
-
         )}
       </div>
     </div>

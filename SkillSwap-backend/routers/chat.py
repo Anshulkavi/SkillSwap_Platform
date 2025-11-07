@@ -1,7 +1,6 @@
-#chat.py
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query, status, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, and_
 import json
 from jose import JWTError, jwt
 from typing import List
@@ -11,6 +10,7 @@ from websocket_manager import manager
 from auth.dependencies import SECRET_KEY, ALGORITHM, get_current_user
 
 router = APIRouter()
+
 
 # -----------------------------
 # 🔹 WebSocket Chat Connection
@@ -79,8 +79,7 @@ async def chat_websocket(
                 continue
 
             elif msg_type == "ping":
-                # Heartbeat, ignore silently
-                continue
+                continue  # Heartbeat
 
             elif msg_type == "text":
                 # Save message to DB
@@ -142,7 +141,8 @@ async def get_chat_history(room_id: str, db: Session = Depends(get_db)):
 # -----------------------------
 @router.get("/conversations")
 async def get_conversations(
-    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     rooms = (
         db.query(ChatMessage.room_id)
@@ -194,21 +194,30 @@ async def get_conversations(
 # -----------------------------
 # 🔹 Start / Create Chat Room
 # -----------------------------
+from pydantic import BaseModel
+
+class StartChatRequest(BaseModel):
+    user_id: int
+
 @router.post("/start")
 async def start_chat(
-    user_id: int,
+    payload: StartChatRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Create or return an existing chat room between two users."""
+    user_id = payload.user_id
+
     if user_id == current_user.id:
         raise HTTPException(status_code=400, detail="Cannot chat with yourself")
 
     small, big = sorted([current_user.id, user_id])
     room_id = f"room_{small}_{big}"
 
-    # Create initial message if room empty
+    # ✅ Check if chat already exists
     exists = db.query(ChatMessage).filter(ChatMessage.room_id == room_id).first()
+
+    # ✅ Create new "system" message if room empty
     if not exists:
         msg = ChatMessage(
             room_id=room_id,

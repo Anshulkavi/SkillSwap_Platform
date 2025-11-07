@@ -10,15 +10,7 @@ const ChatRoom = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // 🚨 Guard early — if no roomId
-  if (!roomId) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-900 text-slate-100">
-        <p className="text-lg">⚠️ No chat selected. Go back to your chat list.</p>
-      </div>
-    );
-  }
-
+  // ✅ All hooks go FIRST
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [partner, setPartner] = useState(null);
@@ -33,20 +25,23 @@ const ChatRoom = () => {
       ? "ws://localhost:8000"
       : "wss://skillswap-backend-rnr8.onrender.com";
 
-  // ✅ Only initialize WebSocket if roomId exists
-  const wsUrl = roomId ? `${wsBase}/api/chat/ws/${roomId}?token=${token}` : null;
+  const wsUrl =
+    roomId && token
+      ? `${wsBase}/api/chat/ws/${roomId}?token=${token}`
+      : null;
+
   const { socket, lastMessage, sendMessage, readyState } = useWebSocket(wsUrl);
 
-  // Partner info
+  // ✅ Fetch partner info
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId || !user?.id) return;
     const ids = roomId.replace("room_", "").split("_").map(Number);
     const partnerId = ids.find((id) => id !== user.id);
     if (partnerId)
       api.get(`/api/users/${partnerId}`).then((res) => setPartner(res.data));
-  }, [roomId, user.id]);
+  }, [roomId, user?.id]);
 
-  // Chat history
+  // ✅ Fetch chat history
   useEffect(() => {
     if (!roomId) return;
     const fetchHistory = async () => {
@@ -61,12 +56,12 @@ const ChatRoom = () => {
     fetchHistory();
   }, [roomId]);
 
-  // Scroll to bottom on new messages
+  // ✅ Scroll to bottom when messages change
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Incoming WebSocket messages
+  // ✅ Handle incoming WebSocket messages
   useEffect(() => {
     if (!lastMessage) return;
     const data = JSON.parse(lastMessage.data);
@@ -83,6 +78,7 @@ const ChatRoom = () => {
     }
   }, [lastMessage]);
 
+  // ✅ Handle typing
   const handleTyping = (e) => {
     setInput(e.target.value);
     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -90,6 +86,7 @@ const ChatRoom = () => {
     }
   };
 
+  // ✅ Handle sending message
   const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -98,6 +95,7 @@ const ChatRoom = () => {
     setInput("");
   };
 
+  // ✅ Conditional rendering AFTER all hooks
   if (!token)
     return (
       <div className="flex items-center justify-center h-screen bg-slate-900">
@@ -107,6 +105,14 @@ const ChatRoom = () => {
       </div>
     );
 
+  if (!roomId)
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-900 text-slate-100">
+        <p className="text-lg">⚠️ No chat selected. Go back to your chat list.</p>
+      </div>
+    );
+
+  // ✅ Main UI
   return (
     <div className="flex flex-col h-screen bg-slate-900 text-slate-100">
       {/* Header */}

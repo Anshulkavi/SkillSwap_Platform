@@ -257,23 +257,23 @@ const Header = () => {
   }, [location.pathname]);
 
   // 🟢 Add Chat link to navigation
-  const navItems = [
-    { id: "/", label: "Home", icon: Home },
-    { id: "/videos", label: "Videos", icon: Video },
-    { id: "/skill-exchange", label: "Skill Exchange", icon: Users },
-    { id: "/community", label: "Community", icon: MessageCircle },
-    { id: "/chat/general", label: "Chat", icon: MessageCircle },
-  ];
+const navItems = [
+  { id: "/app/home", label: "Home", icon: Home },
+  { id: "/app/videos", label: "Videos", icon: Video },
+  { id: "/app/skill-exchange", label: "Skill Exchange", icon: Users },
+  { id: "/app/community", label: "Community", icon: MessageCircle },
+  { id: "/app/chat", label: "Chat", icon: MessageCircle },
+];
 
   const isActivePath = (path) => {
     if (path === "/") return location.pathname === "/";
     return location.pathname.startsWith(path);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+const handleLogout = () => {
+  logout();
+  navigate("/");   // go to landing page
+};
 
   const mobileMenuVariants = {
     hidden: { opacity: 0, y: -20 },
@@ -312,7 +312,7 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
+          <Link to={user ? "/app/home" : "/"} className="flex items-center space-x-2">
             <div className="bg-gradient-to-r from-purple-500 to-indigo-500 p-2 rounded-lg">
               <BookOpen className="h-6 w-6 text-white" />
             </div>
@@ -402,13 +402,13 @@ const Header = () => {
                     </div>
                     <div className="py-1">
                       <Link
-                        to="/profile"
+                        to="/app/profile"
                         className="flex items-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80"
                       >
                         <User className="h-4 w-4 mr-3" /> My Profile
                       </Link>
                       <Link
-                        to="/settings"
+                        to="/app/settings"
                         className="flex items-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/80"
                       >
                         <Settings className="h-4 w-4 mr-3" /> Settings

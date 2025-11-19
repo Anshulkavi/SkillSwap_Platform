@@ -16,7 +16,7 @@ const ChatLayout = () => {
 
   const handleSelectRoom = (roomId) => {
     setActiveRoomId(roomId);
-    navigate(`/chat/${roomId}`);
+    navigate(`/app/chat/${roomId}`);
   };
 
   return (

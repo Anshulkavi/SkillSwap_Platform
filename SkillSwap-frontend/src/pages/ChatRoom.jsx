@@ -120,7 +120,7 @@ const ChatRoom = () => {
       {/* Header */}
       <header className="flex items-center p-4 bg-gradient-to-r from-purple-600 to-indigo-600 shadow-md">
         <button
-          onClick={() => navigate("/chat")}
+          onClick={() => navigate("/app/chat")}
           className="mr-3 p-2 hover:bg-purple-500/30 rounded-full"
         >
           <ArrowLeft size={20} />

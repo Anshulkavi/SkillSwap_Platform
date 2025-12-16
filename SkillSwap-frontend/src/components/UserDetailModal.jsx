@@ -171,9 +171,18 @@
 
 // export default UserDetailModal;
 
-
 import React, { useState } from "react";
-import { X, Star, MessageSquare, UserPlus, MapPin, Calendar, Clock, Sparkles, CheckCircle } from "lucide-react";
+import {
+  X,
+  Star,
+  MessageSquare,
+  UserPlus,
+  MapPin,
+  Calendar,
+  Clock,
+  Sparkles,
+  CheckCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
@@ -202,7 +211,7 @@ const UserDetailModal = ({ listing, onClose }) => {
   const handleChatNow = async (partnerId) => {
     try {
       const res = await api.post("/api/chat/start", { user_id: partnerId });
-      navigate(`/chat/${res.data.room_id}`);
+      navigate(`/app/chat/${res.data.room_id}`);
     } catch (err) {
       console.error("Failed to start chat:", err);
     }
@@ -230,7 +239,7 @@ const UserDetailModal = ({ listing, onClose }) => {
         <div className="relative p-6 bg-gradient-to-r from-purple-600 via-purple-500 to-blue-600 text-white overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
-          
+
           <div className="relative flex justify-between items-center">
             <div className="flex items-center space-x-3">
               <Sparkles className="h-6 w-6 animate-pulse" />
@@ -261,7 +270,9 @@ const UserDetailModal = ({ listing, onClose }) => {
                 </div>
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{user.name}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  {user.name}
+                </h3>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
                   <div className="flex items-center bg-yellow-50 px-3 py-1 rounded-full">
                     <Star className="h-4 w-4 text-yellow-500 fill-current mr-1" />
@@ -299,7 +310,7 @@ const UserDetailModal = ({ listing, onClose }) => {
                 {skill_offered}
               </div>
             </div>
-            
+
             <div className="bg-white rounded-2xl p-5 border-2 border-blue-100 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
               <div className="flex items-center gap-2 mb-3">
                 <div className="bg-gradient-to-br from-blue-400 to-cyan-400 p-2 rounded-lg">
@@ -349,7 +360,7 @@ const UserDetailModal = ({ listing, onClose }) => {
                 )}
               </div>
             </div>
-            
+
             {/* Availability */}
             <div className="bg-white rounded-2xl p-5 border-2 border-gray-100 hover:border-purple-200 transition-all duration-300 shadow-lg">
               <h4 className="font-bold text-gray-900 mb-3 text-sm flex items-center gap-2">
@@ -357,12 +368,12 @@ const UserDetailModal = ({ listing, onClose }) => {
                 Availability
               </h4>
               <p className="text-gray-700 text-sm leading-relaxed">
-                {(availability || []).length > 0 
-                  ? availability.join(", ") 
+                {(availability || []).length > 0
+                  ? availability.join(", ")
                   : "Flexible"}
               </p>
             </div>
-            
+
             {/* Session Type */}
             <div className="bg-white rounded-2xl p-5 border-2 border-gray-100 hover:border-purple-200 transition-all duration-300 shadow-lg">
               <h4 className="font-bold text-gray-900 mb-3 text-sm flex items-center gap-2">
@@ -370,8 +381,8 @@ const UserDetailModal = ({ listing, onClose }) => {
                 Session Type
               </h4>
               <p className="text-gray-700 text-sm leading-relaxed">
-                {(session_type || []).length > 0 
-                  ? session_type.join(", ") 
+                {(session_type || []).length > 0
+                  ? session_type.join(", ")
                   : "Online / In-person"}
               </p>
             </div>
@@ -408,7 +419,10 @@ const UserDetailModal = ({ listing, onClose }) => {
                 onClick={() => handleChatNow(user.id)}
                 className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center justify-center group"
               >
-                <MessageSquare size={20} className="mr-2 group-hover:rotate-12 transition-transform" />
+                <MessageSquare
+                  size={20}
+                  className="mr-2 group-hover:rotate-12 transition-transform"
+                />
                 Start Chat
               </button>
             </div>
@@ -419,12 +433,22 @@ const UserDetailModal = ({ listing, onClose }) => {
       {/* Animations */}
       <style jsx>{`
         @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
         @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;

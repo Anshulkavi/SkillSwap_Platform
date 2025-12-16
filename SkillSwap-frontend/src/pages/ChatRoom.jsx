@@ -265,19 +265,19 @@ const ChatRoom = () => {
   const token = localStorage.getItem("skillswap_access_token");
 
   /* ---------------- DEAL DONE (persisted) ---------------- */
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("accepted_deals") || "[]");
-    setDealDone(stored.includes(roomId));
-  }, [roomId]);
+useEffect(() => {
+  const stored = JSON.parse(localStorage.getItem("accepted_deals") || "[]");
+  setDealDone(stored.includes(roomId));
+}, [roomId]);
 
-  const markDealDone = () => {
-    const stored = JSON.parse(localStorage.getItem("accepted_deals") || "[]");
-    if (!stored.includes(roomId)) {
-      stored.push(roomId);
-      localStorage.setItem("accepted_deals", JSON.stringify(stored));
-    }
-    setDealDone(true);
-  };
+const markDealDone = () => {
+  const stored = JSON.parse(localStorage.getItem("accepted_deals") || "[]");
+  if (!stored.includes(roomId)) {
+    stored.push(roomId);
+    localStorage.setItem("accepted_deals", JSON.stringify(stored));
+  }
+  setDealDone(true);
+};
 
   /* ---------------- WEBSOCKET ---------------- */
   const wsBase =

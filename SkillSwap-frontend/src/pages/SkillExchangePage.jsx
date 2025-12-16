@@ -299,21 +299,11 @@ const SkillExchangePage = () => {
         const response = await api.get("/api/skill-exchange/listings", {
           params,
         });
-        const acceptedDeals = JSON.parse(
-          localStorage.getItem("accepted_deals") || "[]"
-        );
-
         const filtered = response.data.filter(
-          (listing) =>
-            listing.user.id !== user.id &&
-            !acceptedDeals.some(
-              (deal) =>
-                deal.includes(`_${listing.user.id}`) ||
-                deal.includes(`_${user.id}`)
-            )
-        );
+  (listing) => listing.user.id !== user.id
+);
 
-        setListings(filtered);
+setListings(filtered);
       } catch (err) {
         const errorMessage =
           err.response?.data?.detail ||

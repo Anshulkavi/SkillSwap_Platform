@@ -237,9 +237,17 @@
 
 // export default SkillExchangePage;
 
-
 import React, { useState, useEffect } from "react";
-import { Plus, Star, Heart, Search, Sparkles, Users, TrendingUp, Filter } from "lucide-react";
+import {
+  Plus,
+  Star,
+  Heart,
+  Search,
+  Sparkles,
+  Users,
+  TrendingUp,
+  Filter,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import CreateListingModal from "../components/CreateListingModal";
@@ -257,8 +265,18 @@ const SkillExchangePage = () => {
   const [skillWantedQuery, setSkillWantedQuery] = useState("");
 
   const skillCategories = [
-    "All", "Programming", "Design", "Marketing", "Photography", "Music",
-    "Art", "Writing", "Business", "Languages", "Cooking", "Fitness",
+    "All",
+    "Programming",
+    "Design",
+    "Marketing",
+    "Photography",
+    "Music",
+    "Art",
+    "Writing",
+    "Business",
+    "Languages",
+    "Cooking",
+    "Fitness",
   ];
 
   useEffect(() => {
@@ -273,28 +291,56 @@ const SkillExchangePage = () => {
       setError(null);
       try {
         const params = new URLSearchParams();
-        if (selectedCategory !== "All") params.append("category", selectedCategory);
-        if (skillOfferedQuery) params.append("skill_offered", skillOfferedQuery);
+        if (selectedCategory !== "All")
+          params.append("category", selectedCategory);
+        if (skillOfferedQuery)
+          params.append("skill_offered", skillOfferedQuery);
         if (skillWantedQuery) params.append("skill_wanted", skillWantedQuery);
-        const response = await api.get("/api/skill-exchange/listings", { params });
-        setListings(response.data);
+        const response = await api.get("/api/skill-exchange/listings", {
+          params,
+        });
+        const acceptedDeals = JSON.parse(
+          localStorage.getItem("accepted_deals") || "[]"
+        );
+
+        const filtered = response.data.filter(
+          (listing) =>
+            listing.user.id !== user.id &&
+            !acceptedDeals.some(
+              (deal) =>
+                deal.includes(`_${listing.user.id}`) ||
+                deal.includes(`_${user.id}`)
+            )
+        );
+
+        setListings(filtered);
       } catch (err) {
         const errorMessage =
-          err.response?.data?.detail || err.message || "Failed to fetch listings.";
+          err.response?.data?.detail ||
+          err.message ||
+          "Failed to fetch listings.";
         setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
     };
     performFetch();
-  }, [user, authLoading, selectedCategory, skillOfferedQuery, skillWantedQuery]);
+  }, [
+    user,
+    authLoading,
+    selectedCategory,
+    skillOfferedQuery,
+    skillWantedQuery,
+  ]);
 
-  const handleListingCreated = (newListing) => {
-    setListings((prevListings) => [
-      { ...newListing, is_liked: false },
-      ...prevListings,
-    ]);
-  };
+const handleListingCreated = (newListing) => {
+  if (newListing.user.id === user.id) return;
+  setListings((prev) => [
+    { ...newListing, is_liked: false },
+    ...prev,
+  ]);
+};
+
 
   const handleLikeToggle = async (listingId, isCurrentlyLiked) => {
     const originalListings = listings;
@@ -323,11 +369,13 @@ const SkillExchangePage = () => {
             <div className="w-20 h-20 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
             <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-purple-600 animate-pulse" />
           </div>
-          <p className="mt-6 text-gray-600 font-medium">Finding perfect matches...</p>
+          <p className="mt-6 text-gray-600 font-medium">
+            Finding perfect matches...
+          </p>
         </div>
       );
     }
-    
+
     if (error) {
       return (
         <div className="text-center p-12 bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl border-2 border-red-200">
@@ -338,15 +386,19 @@ const SkillExchangePage = () => {
         </div>
       );
     }
-    
+
     if (listings.length === 0) {
       return (
         <div className="text-center p-12 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border-2 border-dashed border-purple-300">
           <div className="bg-gradient-to-br from-purple-100 to-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Users className="h-10 w-10 text-purple-600" />
           </div>
-          <p className="text-gray-600 font-medium text-lg mb-2">No skill exchanges found</p>
-          <p className="text-gray-500 mb-6">Be the first to create a skill exchange opportunity!</p>
+          <p className="text-gray-600 font-medium text-lg mb-2">
+            No skill exchanges found
+          </p>
+          <p className="text-gray-500 mb-6">
+            Be the first to create a skill exchange opportunity!
+          </p>
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300"
@@ -383,7 +435,9 @@ const SkillExchangePage = () => {
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <div className="flex items-center space-x-1 bg-yellow-50 px-2 py-0.5 rounded-full">
                   <Star className="h-3.5 w-3.5 text-yellow-500 fill-current" />
-                  <span className="font-medium">{listing.user.rating || 4.8}</span>
+                  <span className="font-medium">
+                    {listing.user.rating || 4.8}
+                  </span>
                 </div>
                 <span className="bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full font-medium">
                   Level {listing.user.level}
@@ -396,13 +450,17 @@ const SkillExchangePage = () => {
           <div className="flex-1 lg:flex lg:items-center lg:space-x-6">
             <div className="grid md:grid-cols-2 gap-4 lg:flex-1">
               <div>
-                <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">Offering</p>
+                <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">
+                  Offering
+                </p>
                 <div className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 px-4 py-3 rounded-xl font-semibold text-center border-2 border-green-200 hover:scale-105 transition-transform duration-300">
                   {listing.skill_offered}
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">Looking for</p>
+                <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">
+                  Looking for
+                </p>
                 <div className="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 px-4 py-3 rounded-xl font-semibold text-center border-2 border-blue-200 hover:scale-105 transition-transform duration-300">
                   {listing.skill_wanted}
                 </div>
@@ -426,7 +484,9 @@ const SkillExchangePage = () => {
                   : "bg-white border-2 border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-500"
               }`}
             >
-              <Heart className={`h-5 w-5 ${listing.is_liked ? "fill-current" : ""}`} />
+              <Heart
+                className={`h-5 w-5 ${listing.is_liked ? "fill-current" : ""}`}
+              />
             </button>
           </div>
         </div>
@@ -446,9 +506,11 @@ const SkillExchangePage = () => {
                   Skill Exchange
                   <TrendingUp className="h-9 w-9 text-purple-600 animate-pulse" />
                 </h1>
-                <p className="text-gray-600 text-lg">Connect with others for one-on-one skill swapping</p>
+                <p className="text-gray-600 text-lg">
+                  Connect with others for one-on-one skill swapping
+                </p>
               </div>
-              
+
               <button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="group bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 flex items-center space-x-2"
@@ -464,31 +526,41 @@ const SkillExchangePage = () => {
             <div className="bg-white rounded-2xl p-6 border-2 border-purple-100 hover:border-purple-300 transition-all duration-300 hover:shadow-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">Active Listings</p>
-                  <p className="text-3xl font-bold text-purple-600">{listings.length}</p>
+                  <p className="text-gray-600 text-sm font-medium mb-1">
+                    Active Listings
+                  </p>
+                  <p className="text-3xl font-bold text-purple-600">
+                    {listings.length}
+                  </p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-100 to-blue-100 p-4 rounded-xl">
                   <Users className="h-8 w-8 text-purple-600" />
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-2xl p-6 border-2 border-green-100 hover:border-green-300 transition-all duration-300 hover:shadow-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">Skills Available</p>
-                  <p className="text-3xl font-bold text-green-600">{skillCategories.length - 1}</p>
+                  <p className="text-gray-600 text-sm font-medium mb-1">
+                    Skills Available
+                  </p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {skillCategories.length - 1}
+                  </p>
                 </div>
                 <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-4 rounded-xl">
                   <Sparkles className="h-8 w-8 text-green-600" />
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-2xl p-6 border-2 border-blue-100 hover:border-blue-300 transition-all duration-300 hover:shadow-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm font-medium mb-1">Matches Today</p>
+                  <p className="text-gray-600 text-sm font-medium mb-1">
+                    Matches Today
+                  </p>
                   <p className="text-3xl font-bold text-blue-600">24</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-100 to-cyan-100 p-4 rounded-xl">
@@ -502,27 +574,35 @@ const SkillExchangePage = () => {
           <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 hover:border-purple-300 transition-all duration-300 mb-8">
             <div className="flex items-center gap-2 mb-6">
               <Filter className="h-5 w-5 text-purple-600" />
-              <h3 className="text-lg font-bold text-gray-900">Find Your Perfect Match</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                Find Your Perfect Match
+              </h3>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Category Filter */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Category
+                </label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all hover:border-purple-300 cursor-pointer"
                 >
                   {skillCategories.map((category) => (
-                    <option key={category} value={category}>{category}</option>
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
                   ))}
                 </select>
               </div>
 
               {/* Skill Offered Filter */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Skill Offered</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Skill Offered
+                </label>
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
@@ -537,7 +617,9 @@ const SkillExchangePage = () => {
 
               {/* Skill Wanted Filter */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Skill Wanted</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Skill Wanted
+                </label>
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
@@ -552,25 +634,44 @@ const SkillExchangePage = () => {
             </div>
 
             {/* Active Filters Display */}
-            {(selectedCategory !== 'All' || skillOfferedQuery || skillWantedQuery) && (
+            {(selectedCategory !== "All" ||
+              skillOfferedQuery ||
+              skillWantedQuery) && (
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="text-sm text-gray-600 font-medium">Active filters:</span>
-                {selectedCategory !== 'All' && (
+                <span className="text-sm text-gray-600 font-medium">
+                  Active filters:
+                </span>
+                {selectedCategory !== "All" && (
                   <span className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
                     {selectedCategory}
-                    <button onClick={() => setSelectedCategory('All')} className="hover:text-purple-600">×</button>
+                    <button
+                      onClick={() => setSelectedCategory("All")}
+                      className="hover:text-purple-600"
+                    >
+                      ×
+                    </button>
                   </span>
                 )}
                 {skillOfferedQuery && (
                   <span className="inline-flex items-center gap-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                     Offers: {skillOfferedQuery}
-                    <button onClick={() => setSkillOfferedQuery('')} className="hover:text-green-600">×</button>
+                    <button
+                      onClick={() => setSkillOfferedQuery("")}
+                      className="hover:text-green-600"
+                    >
+                      ×
+                    </button>
                   </span>
                 )}
                 {skillWantedQuery && (
                   <span className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
                     Wants: {skillWantedQuery}
-                    <button onClick={() => setSkillWantedQuery('')} className="hover:text-blue-600">×</button>
+                    <button
+                      onClick={() => setSkillWantedQuery("")}
+                      className="hover:text-blue-600"
+                    >
+                      ×
+                    </button>
                   </span>
                 )}
               </div>
@@ -580,7 +681,11 @@ const SkillExchangePage = () => {
           {/* Results Count */}
           <div className="mb-6">
             <p className="text-gray-600 font-medium">
-              Showing <span className="text-purple-600 font-bold">{listings.length}</span> skill exchange{listings.length !== 1 ? 's' : ''}
+              Showing{" "}
+              <span className="text-purple-600 font-bold">
+                {listings.length}
+              </span>{" "}
+              skill exchange{listings.length !== 1 ? "s" : ""}
             </p>
           </div>
 
@@ -606,8 +711,14 @@ const SkillExchangePage = () => {
       {/* Animations */}
       <style jsx>{`
         @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         .animate-fadeInUp {
           animation: fadeInUp 0.6s ease-out forwards;
